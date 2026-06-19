@@ -7,15 +7,15 @@ import { useGameStore } from './store/gameStore';
 import { loadLevel } from './data/schema';
 import type { Level } from './engine/types';
 
-// Import tutorial level statically
-import tutorialData from './data/levels/tutorial.json';
+// Import level statically — swap to change active level
+import levelData from './data/levels/apartment_night.json';
 
 export default function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const initGame = useGameStore(s => s.initGame);
 
   useEffect(() => {
-    const result = loadLevel(tutorialData);
+    const result = loadLevel(levelData);
     if (!result.ok) {
       setLoadError(result.error);
       return;

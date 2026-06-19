@@ -11,7 +11,13 @@ import type { LayoutNode, Connection } from '../engine/types';
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 100;
 
-export function NodeCanvas() {
+interface NodeCanvasProps {
+  selectedItemId: string | null;
+  onItemUse: (itemId: string, nodeId: string) => void;
+  onItemDeselect: () => void;
+}
+
+export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCanvasProps) {
   const evaluator = useGameStore(s => s.getEvaluator());
   const expandedNodes = useGameStore(s => s.expandedNodes);
   const currentNodeId = useGameStore(s => s.currentNodeId);
@@ -84,6 +90,15 @@ export function NodeCanvas() {
     return { layoutNodes, edges };
   }, [evaluator, expandedNodes]);
 
+  // Compute valid target nodes for selected item
+  const validTargets = useMemo(() => {
+    if (!selectedItemId || !evaluator) return new Set<string>();
+    const level = evaluator.getLevel();
+    const item = level.items.find(i => i.id === selectedItemId);
+    if (!item) return new Set<string>();
+    return new Set(item.usableOn);
+  }, [selectedItemId, evaluator]);
+
   // Current node data
   const currentNode = evaluator?.getNode(currentNodeId);
   const visibleConnections: Connection[] = currentNode
@@ -126,6 +141,7 @@ export function NodeCanvas() {
         {layoutNodes.map(ln => {
           const node = evaluator.getLevel().nodes.find(n => n.id === ln.nodeId);
           if (!node) return null;
+          const isTarget = validTargets.has(ln.nodeId);
           return (
             <NodeCard
               key={ln.nodeId}
@@ -136,7 +152,15 @@ export function NodeCanvas() {
               y={ln.y}
               isCurrent={ln.nodeId === currentNodeId}
               isExpanded={expandedNodes.has(ln.nodeId)}
-              onClick={() => clickNode(ln.nodeId)}
+              isValidTarget={isTarget}
+              onClick={() => {
+                if (selectedItemId && isTarget) {
+                  onItemUse(selectedItemId, ln.nodeId);
+                  onItemDeselect();
+                } else {
+                  clickNode(ln.nodeId);
+                }
+              }}
             />
           );
         })}

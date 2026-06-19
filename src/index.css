@@ -45,31 +45,100 @@ html, body {
   color: #ffd700;
 }
 
-/* CSS Text Effects (Phase 2) */
+/* ============================================================
+   CSS Text Effects — Horror atmosphere via keyframe animations.
+   Applied by NodeCard based on node type.
+   ============================================================ */
+
+/* -- Flicker: unstable text, like dying fluorescent light -- */
 @keyframes text-flicker {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  41% { opacity: 1; }
+  42% { opacity: 0.2; }
+  43% { opacity: 1; }
+  45% { opacity: 0.6; }
+  46% { opacity: 1; }
+  70% { opacity: 0.1; }
+  71% { opacity: 0.8; }
 }
 
+/* -- Soft blur pulse: reality distortion -- */
 @keyframes text-blur {
   0%, 100% { filter: blur(0); }
-  50% { filter: blur(1px); }
+  30% { filter: blur(0.3px); }
+  60% { filter: blur(0.8px); }
 }
 
+/* -- Shake: jump-scare micro-tremor -- */
 @keyframes text-shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-2px); }
-  75% { transform: translateX(2px); }
+  10% { transform: translateX(-3px) rotate(-0.5deg); }
+  30% { transform: translateX(3px) rotate(0.5deg); }
+  50% { transform: translateX(-2px); }
+  70% { transform: translateX(2px); }
+  90% { transform: translateX(-1px); }
 }
 
+/* -- Color shift: text drifts toward blood-red then back -- */
+@keyframes text-color-shift {
+  0%, 100% { color: inherit; }
+  25% { color: #cc6666; }
+  50% { color: #aa4444; }
+  75% { color: #cc6666; }
+}
+
+/* -- Glow pulse: subtle golden halo breathing -- */
+@keyframes text-glow-pulse {
+  0%, 100% { text-shadow: 0 0 4px rgba(255, 215, 0, 0.1); }
+  50% { text-shadow: 0 0 12px rgba(255, 215, 0, 0.3); }
+}
+
+/* -- Red glow pulse: danger aura -- */
+@keyframes text-red-glow {
+  0%, 100% { text-shadow: 0 0 3px rgba(255, 0, 0, 0.1); }
+  50% { text-shadow: 0 0 10px rgba(255, 0, 0, 0.4); }
+}
+
+/* -- Distortion: subtle scale/skew for wrongness feeling -- */
+@keyframes text-distortion {
+  0%, 100% { transform: scale(1) skew(0deg); }
+  25% { transform: scale(1.005) skew(0.3deg); }
+  75% { transform: scale(0.995) skew(-0.3deg); }
+}
+
+/* -- Box shadow horror pulse: for monster node backgrounds -- */
+@keyframes box-horror-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(139, 0, 0, 0.3); }
+  50% { box-shadow: 0 0 20px rgba(139, 0, 0, 0.6); }
+}
+
+/* -- Fade-in-up: new node appearance -- */
+@keyframes node-appear {
+  from { opacity: 0; transform: translate(-50%, -50%) translateY(12px); }
+  to   { opacity: 1; transform: translate(-50%, -50%) translateY(0); }
+}
+
+/* -- Utility classes -- */
 .text-horror {
-  animation: text-flicker 3s infinite;
+  animation: text-flicker 4s infinite;
 }
 
 .text-unstable {
-  animation: text-blur 5s infinite;
+  animation: text-blur 6s infinite;
 }
 
 .text-shake {
-  animation: text-shake 0.3s ease-in-out;
+  animation: text-shake 0.4s ease-in-out;
+}
+
+.text-color-shift {
+  animation: text-color-shift 8s infinite;
+}
+
+.text-red-glow {
+  animation: text-red-glow 3s infinite;
+}
+
+.box-horror-pulse {
+  animation: box-horror-pulse 3s infinite;
 }

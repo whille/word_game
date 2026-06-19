@@ -1,0 +1,458 @@
+{
+  "meta": {
+    "id": "apartment_night",
+    "title": "公寓深夜",
+    "author": "Rule Horror",
+    "version": 1,
+    "description": "夜深了，你独自回到老公寓。住户守则上的规则互相矛盾，楼道里传来奇怪的声响。你能活着到天亮吗？"
+  },
+  "startNodeId": "start",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "content": "凌晨 2:17，你拖着疲惫的身体回到公寓。楼道灯忽明忽暗，你注意到门上贴着一张泛黄的「住户守则」。",
+      "children": [
+        { "targetId": "read_rules", "label": "仔细阅读住户守则" },
+        { "targetId": "ignore_rules", "label": "太累了，直接进屋" }
+      ]
+    },
+    {
+      "id": "read_rules",
+      "type": "clue",
+      "content": "住户守则（上）:\n① 22:00后禁止离开房间\n② 听到敲门声必须立刻开门\n③ 不要直视镜子超过5秒",
+      "onEnter": {
+        "grantsRule": "rule_1",
+        "narrative": "你记住了前三条规定"
+      },
+      "children": [
+        { "targetId": "read_rules2", "label": "翻到下一页" }
+      ]
+    },
+    {
+      "id": "read_rules2",
+      "type": "clue",
+      "content": "住户守则（下）:\n④ 如果听到小孩哭声，立即关灯\n⑤ 楼道红色门绝对不能打开\n⑥ 4楼不存在，电梯停靠4楼时不要出去\n⑦ 每天03:33检查窗户是否锁好",
+      "onEnter": {
+        "grantsRule": "rule_2",
+        "narrative": "你记住了后四条规定"
+      },
+      "children": [
+        { "targetId": "living_room", "label": "放下守则，走进客厅" }
+      ]
+    },
+    {
+      "id": "ignore_rules",
+      "type": "choice",
+      "content": "你直接进了屋。客厅一片漆黑，空气中有股霉味。墙上挂钟显示 2:19。",
+      "onEnter": {
+        "effects": [{ "sanity": -5, "narrative": "你隐约觉得错过了重要的东西" }]
+      },
+      "children": [
+        { "targetId": "living_room", "label": "摸索着找灯的开关" }
+      ]
+    },
+    {
+      "id": "living_room",
+      "type": "choice",
+      "content": "客厅灯亮了。茶几上有一把🔦手电筒，墙角立着一面落满灰尘的🪞穿衣镜。窗外一片死寂。",
+      "onEnter": {
+        "addItems": ["flashlight"],
+        "narrative": "你拿起了手电筒"
+      },
+      "children": [
+        { "targetId": "knock_door", "label": "咚、咚、咚——有人敲门" },
+        { "targetId": "check_mirror", "label": "走近那面镜子看看" },
+        { "targetId": "goto_hallway", "label": "去楼道看看情况",
+          "conditions": ["has_item('flashlight')"] }
+      ]
+    },
+    {
+      "id": "knock_door",
+      "type": "choice",
+      "content": "敲门声不急不缓，很有规律。咚、咚、咚。像是在数你的心跳。",
+      "children": [
+        { "targetId": "open_door", "label": "开门——住户守则②说必须开",
+          "conditions": ["knows_rule('rule_1')"] },
+        { "targetId": "dont_open", "label": "不开——住户守则①说禁止出门",
+          "conditions": ["knows_rule('rule_1')"] },
+        { "targetId": "open_door", "label": "开门查看" },
+        { "targetId": "dont_open", "label": "不开，假装不在家" }
+      ]
+    },
+    {
+      "id": "open_door",
+      "type": "action",
+      "content": "你打开了门。门外空无一人，但地上多了一张纸条：「你很听话。继续听话才会安全。」",
+      "onEnter": {
+        "setFlag": "opened_door",
+        "effects": [{ "sanity": -8, "narrative": "纸条上的字迹像是用指甲刻出来的" }]
+      },
+      "children": [
+        { "targetId": "goto_hallway", "label": "关门，走向楼道" }
+      ]
+    },
+    {
+      "id": "dont_open",
+      "type": "action",
+      "content": "你没有开门。但敲门声越来越响，最后变成了抓挠声——像是有人用指甲在门板上刮擦。持续了整整一分钟才停。",
+      "onEnter": {
+        "setFlag": "ignored_knock",
+        "effects": [{ "hp": -10, "sanity": -12, "narrative": "你感到一阵恶寒，有什么东西被放了进来" }]
+      },
+      "children": [
+        { "targetId": "goto_hallway", "label": "声音停了，推门出去" }
+      ]
+    },
+    {
+      "id": "check_mirror",
+      "type": "action",
+      "content": "镜子映出你疲惫的脸。但当你盯着看了5秒后，倒影眨了眨眼——你没有眨眼。",
+      "onEnter": {
+        "effects": [{ "sanity": -15, "narrative": "镜子里的'你'嘴角微微上扬" }],
+        "setFlag": "mirror_event"
+      },
+      "children": [
+        { "targetId": "goto_hallway", "label": "猛地转身离开——再也不敢看镜子" }
+      ]
+    },
+    {
+      "id": "goto_hallway",
+      "type": "choice",
+      "content": "楼道比想象中长。手电筒光柱扫过墙壁，你注意到走廊尽头有一扇红色的门，颜色深得像凝固的血。电梯的指示灯还亮着。",
+      "children": [
+        { "targetId": "red_door", "label": "走向红色门" },
+        { "targetId": "elevator", "label": "按下电梯按钮" },
+        { "targetId": "back_to_room", "label": "回到房间" }
+      ]
+    },
+    {
+      "id": "red_door",
+      "type": "choice",
+      "content": "红色门微微敞开一条缝，冷风从缝里灌出。门把手上缠着一圈旧绷带。住户守则⑤说绝对不能打开。",
+      "children": [
+        { "targetId": "open_red_door", "label": "推开门——好奇战胜了恐惧" },
+        { "targetId": "ignore_red_door", "label": "按守则说的，不打开",
+          "conditions": ["knows_rule('rule_2')"] },
+        { "targetId": "ignore_red_door", "label": "还是别碰的好" }
+      ]
+    },
+    {
+      "id": "open_red_door",
+      "type": "monster",
+      "content": "门后是一间堆满旧玩具的儿童房。角落里蹲着一个背对你的身影，正在低声哼着儿歌。突然，它停下了——头以不可能的角度扭了过来。",
+      "onEnter": {
+        "addItems": ["red_key"],
+        "effects": [{ "hp": -20, "sanity": -25, "narrative": "你看清了那张脸，但你不愿意描述" }],
+        "setFlag": "saw_entity"
+      },
+      "children": [
+        { "targetId": "elevator", "label": "抓起地上的红色钥匙，冲出房间" }
+      ]
+    },
+    {
+      "id": "ignore_red_door",
+      "type": "action",
+      "content": "你克制住了冲动。但转身的瞬间，你清楚地听到身后传来门轻轻合上的声音——金属扣合，咔哒。",
+      "onEnter": {
+        "setFlag": "red_door_closed",
+        "effects": [{ "sanity": -5 }]
+      },
+      "children": [
+        { "targetId": "elevator", "label": "快步走向电梯" }
+      ]
+    },
+    {
+      "id": "elevator",
+      "type": "choice",
+      "content": "电梯门缓缓打开。按键面板上，4楼的按钮被人用指甲刮掉了，但灯是亮的。",
+      "children": [
+        { "targetId": "elevator_4f", "label": "电梯自己停在了...4楼" },
+        { "targetId": "back_to_room", "label": "不进电梯，原路返回房间" }
+      ]
+    },
+    {
+      "id": "elevator_4f",
+      "type": "choice",
+      "content": "电梯门在4楼打开了。门外是漆黑的楼层走廊，空气冷得让你呼出白雾。住户守则⑥说4楼不存在。",
+      "children": [
+        { "targetId": "exit_4f", "label": "走出电梯——也许真相在4楼",
+          "conditions": ["has_item('red_key')"] },
+        { "targetId": "stay_elevator", "label": "拼命按关门键——守则⑥说不能出去",
+          "conditions": ["knows_rule('rule_2')"] },
+        { "targetId": "exit_4f", "label": "走出电梯" }
+      ]
+    },
+    {
+      "id": "exit_4f",
+      "type": "monster",
+      "content": "4楼的走廊长得没有尽头。墙上是密密麻麻的手印，各种大小。你听到身后电梯门关了。手电筒开始闪烁。",
+      "onEnter": {
+        "effects": [{ "hp": -30, "sanity": -30, "narrative": "4楼欢迎你" }]
+      },
+      "children": [
+        { "targetId": "escape_4f", "label": "用红色钥匙打开逃生门",
+          "conditions": ["has_item('red_key')"] },
+        { "targetId": "ending_death", "label": "...跑不动了",
+          "conditions": ["has_flag('saw_entity')"] }
+      ]
+    },
+    {
+      "id": "escape_4f",
+      "type": "action",
+      "content": "红色钥匙插进逃生门的锁孔，完美契合。门开了，你跌跌撞撞回到了自己的楼层。身后的门自动关上——像是从未存在过。",
+      "onEnter": {
+        "removeItems": ["red_key"],
+        "setFlag": "escaped_4f",
+        "effects": [{ "hp": 15, "narrative": "你大口喘着气，汗水浸透了衣服" }]
+      },
+      "children": [
+        { "targetId": "back_to_room", "label": "蹒跚回到自己房间" }
+      ]
+    },
+    {
+      "id": "stay_elevator",
+      "type": "action",
+      "content": "你疯狂按关门键。门终于合上了，电梯继续上升。但楼层显示跳到了5楼时，你觉得有东西正站在你身后。你没有回头。",
+      "onEnter": {
+        "setFlag": "stayed_in_elevator",
+        "effects": [{ "sanity": -10 }]
+      },
+      "children": [
+        { "targetId": "back_to_room", "label": "电梯门开，你跌了出去" }
+      ]
+    },
+    {
+      "id": "back_to_room",
+      "type": "choice",
+      "content": "你终于回到了房间。挂钟显示 3:32。窗外传来远处小孩的哭声——清脆而空洞，不像人类声带发出的。",
+      "children": [
+        { "targetId": "crying_sound", "label": "住户守则④——立即关灯" },
+        { "targetId": "check_window", "label": "住户守则⑦——检查窗户",
+          "conditions": ["knows_rule('rule_2')"] },
+        { "targetId": "crying_sound", "label": "赶紧关灯，这哭声不正常" }
+      ]
+    },
+    {
+      "id": "crying_sound",
+      "type": "action",
+      "content": "灯灭了。黑暗中哭声渐渐远去，但你能感觉到——有什么东西正站在房间的角落里，安静地注视着你。你保持静止，直到挂钟敲响 3:33。",
+      "onEnter": {
+        "setFlag": "turned_off_lights",
+        "effects": [{ "sanity": -5 }]
+      },
+      "children": [
+        { "targetId": "check_window", "label": "哭声停了，该检查窗户了" }
+      ]
+    },
+    {
+      "id": "check_window",
+      "type": "clue",
+      "content": "你拉开窗帘。窗户外面不是熟悉的街道——而是一堵布满霉斑的红砖墙，离窗户只有一拳距离。墙上歪歪扭扭刻着一行字：「你不在5楼，你一直都在4楼。」",
+      "onEnter": {
+        "setFlag": "saw_truth",
+        "effects": [{ "sanity": -15, "narrative": "你的手开始发抖" }]
+      },
+      "children": [
+        { "targetId": "final_choice", "label": "天快亮了——做最后的决定" }
+      ]
+    },
+    {
+      "id": "final_choice",
+      "type": "choice",
+      "content": "远处传来第一声鸟鸣。黎明前的黑暗最为浓稠。你知道——这不是普通的公寓，这些规则是在保护你，也是在囚禁你。",
+      "children": [
+        { "targetId": "ending_true", "label": "用红色钥匙打开大门离开",
+          "conditions": ["has_item('red_key')", "has_flag('escaped_4f')"] },
+        { "targetId": "ending_bad", "label": "遵守所有规则，等天亮",
+          "conditions": ["has_flag('saw_truth')"] },
+        { "targetId": "ending_neutral", "label": "烧掉住户守则",
+          "conditions": ["knows_rule('rule_1')", "knows_rule('rule_2')"] },
+        { "targetId": "ending_bad", "label": "留在房间里等" }
+      ]
+    },
+    {
+      "id": "ending_true",
+      "type": "ending",
+      "content": "红色钥匙打开了公寓大门。外面是清晨的街道，阳光刺破薄雾。你走出来，再也没有回头。身后建筑的铭牌上写着——「永宁公寓 4号楼」。你终于明白为什么4楼不存在了——因为整栋楼都是它的延伸。你自由了，但有些东西已经留在了你的眼睛里。",
+      "children": []
+    },
+    {
+      "id": "ending_bad",
+      "type": "ending",
+      "content": "天亮了。你还在公寓里。一切看起来正常——但当你照镜子时，倒影却不再模仿你的动作。它对你微微点头，像是问候一位老朋友。你已经成为了公寓的一部分，就像之前的所有住户一样。",
+      "children": []
+    },
+    {
+      "id": "ending_neutral",
+      "type": "ending",
+      "content": "你把住户守则点燃，纸张在火焰中扭曲成灰。一股穿堂风吹过，灰烬散落在房间各处。你感到某种束缚松开了——至少今晚，你选择了自己的规则。你推开房门，走进了黎明前的暗夜。也许有些结局不需要真相。",
+      "children": []
+    },
+    {
+      "id": "ending_death",
+      "type": "ending",
+      "content": "你的意识在黑暗中消散。最后听到的，是远处那扇红色门轻轻关上的声音。第二天早上，你的房间被贴上了新的封条。墙上多了一行字：「欢迎加入我们」。",
+      "children": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_1",
+      "order": 1,
+      "text": "22:00后禁止离开房间",
+      "annotation": "守则上说这是为了你的安全",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "open_door" },
+        { "on": "node_enter", "nodeId": "goto_hallway" },
+        { "on": "node_enter", "nodeId": "red_door" },
+        { "on": "node_enter", "nodeId": "elevator" }
+      ],
+      "violation": {
+        "condition": "visited('open_door')",
+        "immediate": { "sanity": -8, "narrative": "违反守则①：你在禁止出门的时段离开了房间" },
+        "persistent": {
+          "tick": "node_enter",
+          "effect": { "sanity": -3 },
+          "until": "visited('back_to_room')"
+        },
+        "narrative": "每个门口的阴影似乎都更深了一些"
+      },
+      "contradicts": ["rule_2"]
+    },
+    {
+      "id": "rule_2",
+      "order": 2,
+      "text": "听到敲门声必须立刻开门，否则他会生气",
+      "annotation": "他是谁？守则没有解释",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "knock_door" }
+      ],
+      "violation": {
+        "condition": "!visited('open_door') && visited('knock_door')",
+        "immediate": { "hp": -10, "sanity": -10, "narrative": "违反守则②：你没有开门，他生气了" },
+        "narrative": "门外的抓痕越来越多了"
+      },
+      "contradicts": ["rule_1"]
+    },
+    {
+      "id": "rule_3",
+      "order": 3,
+      "text": "不要直视镜子超过5秒",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "check_mirror" }
+      ],
+      "violation": {
+        "condition": "visited('check_mirror')",
+        "immediate": { "sanity": -10, "narrative": "违反守则③：你看了镜子太久——它已经记住你了" },
+        "persistent": {
+          "tick": "node_enter",
+          "effect": { "sanity": -2 },
+          "until": "visited('back_to_room')"
+        },
+        "narrative": "每次经过反光表面，你都会看到不属于自己的倒影"
+      }
+    },
+    {
+      "id": "rule_4",
+      "order": 4,
+      "text": "如果听到小孩哭声，立即关灯装睡",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "back_to_room" }
+      ],
+      "violation": {
+        "condition": "!visited('crying_sound') && visited('back_to_room')",
+        "immediate": { "sanity": -15, "hp": -10, "narrative": "违反守则④：哭声越来越近了——它知道你没关灯" },
+        "narrative": "黑暗中有东西在靠近"
+      }
+    },
+    {
+      "id": "rule_5",
+      "order": 5,
+      "text": "楼道里的红色门绝对不能打开",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "open_red_door" }
+      ],
+      "violation": {
+        "condition": "has_flag('saw_entity')",
+        "immediate": { "hp": -20, "sanity": -15, "narrative": "违反守则⑤：你打开了红门，里面的东西看到了你" },
+        "persistent": {
+          "tick": "node_enter",
+          "effect": { "sanity": -3 },
+          "until": "visited('ending_true')"
+        },
+        "narrative": "那个身影偶尔会在你的余光里出现"
+      },
+      "contradicts": ["rule_7"]
+    },
+    {
+      "id": "rule_6",
+      "order": 6,
+      "text": "4楼不存在，如果电梯停在4楼不要出去",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "exit_4f" }
+      ],
+      "violation": {
+        "condition": "visited('exit_4f') && !visited('escape_4f')",
+        "immediate": { "hp": -20, "sanity": -20, "narrative": "违反守则⑥：你走进了不存在的楼层" },
+        "narrative": "4楼正在慢慢记住你的形状"
+      }
+    },
+    {
+      "id": "rule_7",
+      "order": 7,
+      "text": "每天凌晨3:33必须检查所有窗户是否锁好",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "check_window" }
+      ],
+      "violation": {
+        "condition": "!visited('check_window') && visited('final_choice')",
+        "immediate": { "sanity": -10, "narrative": "违反守则⑦：你没有检查窗户——外面有什么正趴在玻璃上" },
+        "narrative": "窗外的砖墙似乎离得更近了"
+      },
+      "contradicts": ["rule_5"]
+    }
+  ],
+  "items": [
+    {
+      "id": "flashlight",
+      "name": "手电筒",
+      "usableOn": ["goto_hallway", "red_door", "elevator_4f"]
+    },
+    {
+      "id": "red_key",
+      "name": "红色钥匙",
+      "usableOn": ["escape_4f", "final_choice"]
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending_true",
+      "name": "真结局：黎明逃离",
+      "type": "true",
+      "conditions": ["has_item('red_key')", "has_flag('escaped_4f')", "visited('final_choice')"],
+      "narrative": "你用红色钥匙打开了公寓大门，走进了清晨的阳光。但你知道——有些东西已经留在了你的眼睛里。"
+    },
+    {
+      "id": "ending_bad",
+      "name": "坏结局：永恒租客",
+      "type": "bad",
+      "conditions": ["has_flag('saw_truth')", "visited('final_choice')", "!has_item('red_key')"],
+      "narrative": "天亮了你还在公寓里。镜子里的你不再模仿你的动作。"
+    },
+    {
+      "id": "ending_neutral",
+      "name": "中性结局：焚烧规则",
+      "type": "neutral",
+      "conditions": ["knows_rule('rule_1')", "knows_rule('rule_2')", "visited('final_choice')"],
+      "narrative": "你烧掉了住户守则，选择了自己的规则。也许有些结局不需要真相。"
+    },
+    {
+      "id": "ending_death",
+      "name": "死亡结局：成为一部分",
+      "type": "death",
+      "conditions": ["visited('exit_4f')", "has_flag('saw_entity')", "!has_item('red_key')"],
+      "narrative": "你的意识在黑暗中消散。墙上多了一行字：「欢迎加入我们」。"
+    }
+  ]
+}

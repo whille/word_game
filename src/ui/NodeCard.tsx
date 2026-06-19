@@ -11,32 +11,48 @@ interface NodeCardProps {
   y: number;
   isCurrent: boolean;
   isExpanded: boolean;
+  isValidTarget: boolean;
   onClick: () => void;
 }
 
-export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _isExpanded, onClick }: NodeCardProps) {
+export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _isExpanded, isValidTarget, onClick }: NodeCardProps) {
   const isVisited = useGameStore(s => s.visitedNodes.has(nodeId));
 
-  const style = useMemo(() => ({
-    position: 'absolute' as const,
-    left: x,
-    top: y,
-    transform: 'translate(-50%, -50%)',
-    maxWidth: '200px',
-    padding: '12px 16px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    opacity: isVisited && !isCurrent ? 0.5 : 1,
-    border: isCurrent ? '2px solid #ffd700' : '2px solid transparent',
-    background: bgForType(type),
-    color: colorForType(type),
-    fontSize: '14px',
-    lineHeight: '1.6',
-    transition: 'opacity 0.3s, border-color 0.3s, box-shadow 0.3s',
-    boxShadow: isCurrent ? '0 0 12px rgba(255, 215, 0, 0.3)' : 'none',
-    userSelect: 'none' as const,
-    zIndex: isCurrent ? 2 : 1,
-  }), [x, y, isCurrent, isVisited, type]);
+  const style = useMemo(() => {
+    const animClass = animationForType(type);
+    // Determine border: gold for current, green pulse for valid item target
+    let border = '2px solid transparent';
+    let boxShadow = 'none';
+    if (isCurrent) {
+      border = '2px solid #ffd700';
+      boxShadow = '0 0 12px rgba(255, 215, 0, 0.3)';
+    } else if (isValidTarget) {
+      border = '2px solid #44cc88';
+      boxShadow = '0 0 10px rgba(68, 204, 136, 0.25)';
+    }
+
+    return {
+      position: 'absolute' as const,
+      left: x,
+      top: y,
+      transform: 'translate(-50%, -50%)',
+      maxWidth: '200px',
+      padding: '12px 16px',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      opacity: isVisited && !isCurrent ? 0.5 : 1,
+      border,
+      background: bgForType(type),
+      color: colorForType(type),
+      fontSize: '14px',
+      lineHeight: '1.6',
+      transition: 'opacity 0.3s, border-color 0.3s, box-shadow 0.3s',
+      boxShadow: isValidTarget && !isCurrent ? '0 0 10px rgba(68, 204, 136, 0.25)' : boxShadow,
+      userSelect: 'none' as const,
+      zIndex: isCurrent ? 2 : 1,
+      animation: isValidTarget ? `${animClass}, box-horror-pulse 2s infinite` : animClass,
+    };
+  }, [x, y, isCurrent, isVisited, type, isValidTarget]);
 
   return (
     <div style={style} onClick={onClick}>
@@ -91,5 +107,25 @@ function colorForType(type: NodeType): string {
     case 'monster': return '#ff7675';
     case 'ending': return '#b2bec3';
     default: return '#e0e0e0';
+  }
+}
+
+/** CSS animation string applied based on node type for horror atmosphere. */
+function animationForType(type: NodeType): string {
+  switch (type) {
+    case 'clue':
+      // Clue text flickers — unstable, partially hidden truth
+      return 'text-flicker 4s infinite';
+    case 'monster':
+      // Monster nodes shake + red pulse background
+      return 'text-shake 0.4s ease-in-out, box-horror-pulse 3s infinite';
+    case 'action':
+      // Action nodes have subtle golden glow — items of power
+      return 'text-glow-pulse 4s infinite';
+    case 'ending':
+      // Ending nodes blur and color-shift — reality breaking
+      return 'text-blur 6s infinite, text-color-shift 8s infinite';
+    default:
+      return 'none';
   }
 }
