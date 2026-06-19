@@ -42,14 +42,22 @@ export function ConnectionLines({ edges }: Props) {
 
         return (
           <g key={i}>
-            {/* Line: parent → label row → child (elbow connector) */}
-            <polyline
-              points={`${x1},${y1} ${x1},${labelY} ${labelX},${labelY} ${x2},${labelY} ${x2},${y2}`}
-              fill="none"
-              stroke="#444"
-              strokeWidth={1.2}
-              strokeDasharray="5 4"
-              opacity={0.45}
+            {/* Line: parent → label (top half) */}
+            <line
+              x1={x1} y1={y1} x2={x1} y2={labelY - 19}
+              stroke="#555"
+              strokeWidth={1.5}
+              strokeDasharray="6 3"
+              opacity={0.5}
+              pointerEvents="none"
+            />
+            {/* Line: label → child (bottom half) */}
+            <line
+              x1={x2} y1={labelY + 19} x2={x2} y2={y2}
+              stroke="#555"
+              strokeWidth={1.5}
+              strokeDasharray="6 3"
+              opacity={0.5}
               pointerEvents="none"
             />
             <g
