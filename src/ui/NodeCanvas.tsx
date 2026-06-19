@@ -257,6 +257,7 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
               isExpanded={expandedNodes.has(ln.nodeId)}
               isValidTarget={isTarget}
               hasExpandedChildren={hasExpandedChildren}
+              isOption={false}
                             onClick={() => {
                 if (isDragging) return;
                 if (selectedItemId && isTarget) {

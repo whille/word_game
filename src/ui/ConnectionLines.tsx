@@ -13,6 +13,46 @@ interface Props {
 }
 
 export function ConnectionLines({ edges }: Props) {
+  // ---- Precompute label positions to avoid overlaps ----
+  const LABEL_Y_OFFSET = 70;
+  const MIN_LABEL_SPACING = 150;
+
+  interface LabelPos { x: number; y: number; width: number; }
+  const labelPosMap = new Map<number, LabelPos>();
+
+  // Group edge indices by parent node
+  const byParent = new Map<string, number[]>();
+  edges.forEach((_, i) => {
+    const key = edges[i].from.nodeId;
+    if (!byParent.has(key)) byParent.set(key, []);
+    byParent.get(key)!.push(i);
+  });
+
+  for (const indices of byParent.values()) {
+    const n = indices.length;
+    const from = edges[indices[0]].from;
+    const baseY = from.y + from.height / 2 + LABEL_Y_OFFSET;
+
+    if (n === 1) {
+      const edge = edges[indices[0]];
+      const w = Math.max(120, Math.min(200, edge.label.length * 16));
+      const midX = (edge.from.x + edge.to.x) / 2;
+      labelPosMap.set(indices[0], { x: midX, y: baseY, width: w });
+    } else {
+      // Sort by child X for stable left-to-right ordering
+      const sorted = [...indices].sort((a, b) => edges[a].to.x - edges[b].to.x);
+      // Spread labels evenly centered on parent X, with minimum spacing
+      const totalSpan = (n - 1) * MIN_LABEL_SPACING;
+      const startX = from.x - totalSpan / 2;
+
+      for (let i = 0; i < n; i++) {
+        const edge = edges[sorted[i]];
+        const w = Math.max(120, Math.min(200, edge.label.length * 16));
+        labelPosMap.set(sorted[i], { x: startX + i * MIN_LABEL_SPACING, y: baseY, width: w });
+      }
+    }
+  }
+
   return (
     <svg style={{
       position: 'absolute',
@@ -32,13 +72,10 @@ export function ConnectionLines({ edges }: Props) {
         const y1 = from.y + from.height / 2;
         const x2 = to.x;
         const y2 = to.y - to.height / 2;
-        // Label at fixed Y offset from parent → all options from same parent align horizontally
-        const LABEL_Y_OFFSET = 70;
-        const labelY = y1 + LABEL_Y_OFFSET;
-        const labelX = (x1 + x2) / 2;
-
-        // Measure approximate label width for column sizing
-        const labelWidth = Math.max(120, Math.min(200, edge.label.length * 16));
+        const lp = labelPosMap.get(i)!;
+        const labelX = lp.x;
+        const labelY = lp.y;
+        const labelWidth = lp.width;
 
         return (
           <g key={i}>

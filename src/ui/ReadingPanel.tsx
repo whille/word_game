@@ -14,7 +14,6 @@ export function ReadingPanel({ selectedItemId, onItemUse, onItemDeselect }: Read
   const evaluator = useGameStore(s => s.getEvaluator());
   const currentNodeId = useGameStore(s => s.currentNodeId);
   const selectConnection = useGameStore(s => s.selectConnection);
-  const clickNode = useGameStore(s => s.clickNode);
 
   const node = evaluator?.getNode(currentNodeId);
   const visibleConnections: Connection[] = useMemo(() => {

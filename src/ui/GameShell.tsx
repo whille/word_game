@@ -145,12 +145,12 @@ export function GameShell() {
       overflow: 'hidden',
     }}>
       {/* ======== Background Layer ======== */}
-      {currentBackground && bgImages[currentBackground] && (
+      {currentBackground && bgImages[currentBackground as BgKey] && (
         <div style={{
           position: 'fixed',
           inset: 0,
           zIndex: 0,
-          backgroundImage: `url(${bgImages[currentBackground]})`,
+          backgroundImage: `url(${bgImages[currentBackground as BgKey]})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           opacity: 0.08,

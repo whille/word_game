@@ -164,6 +164,7 @@ export interface SerializedGameState {
   expandedNodes: string[];
   activeViolations: ActiveViolation[];
   discoveredEndings: string[];
+  currentBackground: string | null;
 }
 
 // ---- Game State (runtime, with Sets/Maps) ----
