@@ -64,6 +64,19 @@ export function EditorShell({ onBack, onPlay }: Props) {
     if (r.ok) alert('✅ 关卡数据验证通过');
   };
 
+  const handleShare = async () => {
+    const json = exportJSON();
+    const encoded = encodeURIComponent(btoa(json));
+    const url = `${window.location.origin}${window.location.pathname}?l=${encoded}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('📋 分享链接已复制到剪贴板！\n\n' + url);
+    } catch {
+      // Fallback: show in prompt
+      prompt('复制此链接分享关卡:', url);
+    }
+  };
+
   const handlePlay = () => {
     const json = exportJSON();
     onPlay(json);
@@ -122,6 +135,7 @@ export function EditorShell({ onBack, onPlay }: Props) {
         </span>
 
         <button onClick={handleValidate} style={tbBtn}>🔍 验证</button>
+        <button onClick={handleShare} style={{...tbBtn, background: '#1a2a2e', borderColor: '#2a4a4a'}}>🔗 分享</button>
         <button onClick={handleExport} style={tbBtn}>📥 导出</button>
         <button onClick={handleImport} style={tbBtn}>📤 导入</button>
         <button onClick={handlePlay} style={{...tbBtn, background: '#1a2a1a', borderColor: '#2a4a2a'}}>

@@ -1,5 +1,5 @@
 // App.tsx — Root component. Level selection → load → init → GameShell or EditorShell.
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { GameShell } from './ui/GameShell';
 import { EditorShell } from './editor/EditorShell';
 import { ErrorBoundary } from './ui/ErrorBoundary';
@@ -23,13 +23,46 @@ const LEVELS = [
 type LevelKey = (typeof LEVELS)[number]['key'];
 type View = 'menu' | 'game' | 'editor';
 
+/** Decode a shared level from URL param */
+function loadFromURL(): { level: Level } | null {
+  const params = new URLSearchParams(window.location.search);
+  const encoded = params.get('level') || params.get('l');
+  if (!encoded) return null;
+  try {
+    const json = JSON.parse(atob(decodeURIComponent(encoded)));
+    const result = loadLevel(json);
+    if (result.ok) return { level: result.level };
+  } catch { /* invalid URL param — ignore */ }
+  return null;
+}
+
 export default function App() {
   const [view, setView] = useState<View>('menu');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeKey, setActiveKey] = useState<LevelKey | null>(null);
+  const [shareTitle, setShareTitle] = useState<string | null>(null);
   const initGame = useGameStore(s => s.initGame);
   const resetGame = useGameStore(s => s.resetGame);
   const currentNodeId = useGameStore(s => s.currentNodeId);
+  const urlCheckedRef = useRef(false);
+
+  // Check URL for shared level on first mount
+  useEffect(() => {
+    if (urlCheckedRef.current) return;
+    urlCheckedRef.current = true;
+    const shared = loadFromURL();
+    if (shared) {
+      resetGame();
+      initGame(shared.level);
+      setShareTitle(shared.level.meta.title);
+      setView('game');
+      // Clean URL without reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('level');
+      url.searchParams.delete('l');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [initGame, resetGame]);
 
   const startLevel = useCallback((key: LevelKey) => {
     const entry = LEVELS.find(l => l.key === key);
@@ -42,6 +75,7 @@ export default function App() {
     resetGame();
     initGame(result.level as Level);
     setActiveKey(key);
+    setShareTitle(null);
     setLoadError(null);
     setView('game');
   }, [initGame, resetGame]);
@@ -89,7 +123,15 @@ export default function App() {
   if (view === 'game' && currentNodeId) {
     return (
       <ErrorBoundary>
-        <GameShell onBackToMenu={() => setView('menu')} />
+        {shareTitle && (
+          <div style={{
+            padding: '6px 16px', background: '#1a1a2e', borderBottom: '1px solid #2a2a4a',
+            color: '#8899cc', fontSize: '12px', textAlign: 'center',
+          }}>
+            📤 正在游玩分享关卡：「{shareTitle}」
+          </div>
+        )}
+        <GameShell onBackToMenu={() => { setView('menu'); setShareTitle(null); }} />
       </ErrorBoundary>
     );
   }
@@ -137,7 +179,7 @@ export default function App() {
             </button>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
           <button onClick={startEditor}
             style={{ ...menuCard, background: '#0d1a0d', borderColor: '#1a2a1a', textAlign: 'center', padding: '0.8rem 1.5rem' }}>
             🎨 关卡编辑器
@@ -148,6 +190,21 @@ export default function App() {
               继续当前关卡
             </button>
           )}
+          <button onClick={async () => {
+            try {
+              const text = await navigator.clipboard.readText();
+              const json = JSON.parse(text);
+              const result = loadLevel(json);
+              if (!result.ok) { alert('关卡数据无效: ' + result.error); return; }
+              resetGame();
+              initGame(result.level as Level);
+              setShareTitle(result.level.meta.title);
+              setView('game');
+            } catch { alert('剪贴板中没有有效的关卡 JSON。请复制包含关卡数据的文本。'); }
+          }}
+            style={{ ...menuCard, background: '#1a1a2e', borderColor: '#2a2a4a', textAlign: 'center', padding: '0.8rem 1.5rem' }}>
+            📋 粘贴分享关卡
+          </button>
         </div>
       </div>
     </ErrorBoundary>
