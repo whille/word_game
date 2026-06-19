@@ -28,7 +28,11 @@ const bgImages: Record<BgKey, string> = {
   mirror_scene: mirrorImg,
 };
 
-export function GameShell() {
+interface GameShellProps {
+  onBackToMenu?: () => void;
+}
+
+export function GameShell({ onBackToMenu }: GameShellProps) {
   // ---- UI state ----
   const [isNotebookOpen, setNotebookOpen] = useState(false);
   const [isSaveManagerOpen, setSaveManagerOpen] = useState(false);
@@ -265,6 +269,27 @@ export function GameShell() {
                 >
                   🏆 结局收藏
                 </button>
+                {onBackToMenu && (
+                  <button
+                    onClick={() => { onBackToMenu(); setMenuOpen(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '10px 16px',
+                      background: 'none',
+                      border: 'none',
+                      color: '#aaa',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      borderBottom: '1px solid #1a1a28',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#1a1a2e'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                  >
+                    ↩ 返回菜单
+                  </button>
+                )}
                 <button
                   onClick={handleRestart}
                   style={{
