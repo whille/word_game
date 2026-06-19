@@ -68,6 +68,7 @@ export interface NodeDef {
     grantsRule?: string; // reveals a rule when entered
     narrative?: string;
     effects?: Effect[];
+    background?: string; // background image key (e.g. "hallway_dim")
   };
 }
 
@@ -178,6 +179,7 @@ export interface GameState {
   expandedNodes: Set<string>;
   snapshots: Snapshot[];
   discoveredEndings: string[];
+  currentBackground: string | null;
 }
 
 // ---- Layout Node (used by NodeCanvas) ----

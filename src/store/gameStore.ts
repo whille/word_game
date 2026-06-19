@@ -52,6 +52,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
   expandedNodes: new Set(),
   snapshots: [],
   discoveredEndings: [],
+	currentBackground: null,
 
   _evaluator: null,
 
@@ -74,7 +75,8 @@ export const useGameStore = create<StoreState>((set, get) => ({
       expandedNodes: new Set([level.startNodeId]),
       snapshots: [],
       discoveredEndings: [],
-      _evaluator: evaluator,
+      currentBackground: startNode.onEnter?.background ?? null,
+	      _evaluator: evaluator,
     });
   },
 
@@ -178,6 +180,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
       discoveredEndings: ending && !state.discoveredEndings.includes(ending.id)
         ? [...state.discoveredEndings, ending.id]
         : state.discoveredEndings,
+      currentBackground: node.onEnter?.background ?? state.currentBackground,
     });
   },
 
@@ -320,6 +323,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
       expandedNodes: new Set(),
       snapshots: [],
       discoveredEndings: [],
+      currentBackground: null,
     });
   },
 

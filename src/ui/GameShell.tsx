@@ -27,6 +27,16 @@ export function GameShell() {
   const evaluator = useGameStore(s => s.getEvaluator());
   const knownRules = useGameStore(s => s.knownRules);
   const useItem = useGameStore(s => s.useItem);
+  const currentBackground = useGameStore(s => s.currentBackground);
+
+  // ---- Background image map (populated later via Minimax generation) ----
+  const bgImages: Record<string, string> = {
+    // Placeholder — replace with actual generated image URLs
+    hallway_dim: '',  // 昏暗楼道
+    red_door_room: '', // 红色门房间
+    apartment_4f: '',  // 4楼走廊
+    mirror_scene: '',  // 镜子场景
+  };
 
   // Compute contradictions
   const contradictionCount = (() => {
@@ -107,6 +117,22 @@ export function GameShell() {
       fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
       overflow: 'hidden',
     }}>
+      {/* ======== Background Layer ======== */}
+      {currentBackground && bgImages[currentBackground] && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: `url(${bgImages[currentBackground]})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.08,
+          filter: 'blur(4px) grayscale(0.5)',
+          transition: 'opacity 0.8s ease-in-out',
+          pointerEvents: 'none',
+        }} />
+      )}
+
       {/* ======== Top Bar: Status + Controls ======== */}
       <div style={{
         display: 'flex',

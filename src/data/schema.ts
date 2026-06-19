@@ -41,6 +41,7 @@ const onEnterSchema = z.object({
   grantsRule: z.string().optional(),
   narrative: z.string().optional(),
   effects: z.array(effectSchema).optional(),
+  background: z.string().optional(),
 }).optional();
 
 const ruleTriggerSchema = z.object({
