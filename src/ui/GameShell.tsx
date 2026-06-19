@@ -148,9 +148,9 @@ export function GameShell({ onBackToMenu }: GameShellProps) {
       fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
       overflow: 'hidden',
     }}>
-      {/* ======== Background Layer ======== */}
+      {/* ======== Background Layer (crossfade via key remount) ======== */}
       {currentBackground && bgImages[currentBackground as BgKey] && (
-        <div style={{
+        <div key={currentBackground} style={{
           position: 'fixed',
           inset: 0,
           zIndex: 0,
@@ -159,7 +159,7 @@ export function GameShell({ onBackToMenu }: GameShellProps) {
           backgroundPosition: 'center',
           opacity: 0.08,
           filter: 'blur(4px) grayscale(0.5)',
-          transition: 'opacity 0.8s ease-in-out',
+          animation: 'bgFadeIn 1.2s ease-in-out',
           pointerEvents: 'none',
         }} />
       )}

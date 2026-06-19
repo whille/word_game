@@ -124,6 +124,32 @@ html, body {
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* -- Bar flash on damage (brief white flash then back) -- */
+@keyframes bar-flash-down {
+  0%   { background-position: 0% 0; }
+  50%  { background-position: 100% 0; }
+  100% { background-position: 0% 0; }
+}
+
+@keyframes bar-flash-up {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(1.6); }
+  100% { filter: brightness(1); }
+}
+
+/* -- Background crossfade -- */
+@keyframes bgFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 0.08; }
+}
+
+/* -- NodeCard entry pulse -- */
+@keyframes node-entry-pulse {
+  0%   { box-shadow: 0 0 0px rgba(255, 215, 0, 0); }
+  40%  { box-shadow: 0 0 24px rgba(255, 215, 0, 0.5); }
+  100% { box-shadow: 0 0 16px rgba(255, 215, 0, 0.35); }
+}
+
 /* -- Utility classes -- */
 .text-horror {
   animation: text-flicker 4s infinite;

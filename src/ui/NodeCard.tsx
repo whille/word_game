@@ -65,7 +65,11 @@ export function NodeCard({
       boxShadow,
       userSelect: 'none' as const,
       zIndex: isCurrent ? 3 : isOption ? 2 : 1,
-      animation: isValidTarget ? `${animClass}, box-horror-pulse 2s infinite` : animClass,
+      animation: [
+        animClass,
+        isValidTarget && 'box-horror-pulse 2s infinite',
+        isCurrent && 'node-entry-pulse 0.6s ease-out',
+      ].filter(Boolean).join(', '),
     };
   }, [x, y, isCurrent, isVisited, type, isValidTarget, isOption]);
 
