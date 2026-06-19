@@ -3,10 +3,10 @@
 
 const CACHE_NAME = 'rule-horror-v1';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/favicon.svg',
-  '/manifest.json',
+  './',
+  './index.html',
+  './favicon.svg',
+  './manifest.json',
 ];
 
 // Install: pre-cache core static assets
@@ -57,7 +57,7 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => {
         // Offline fallback — return cached index.html for navigation requests
         if (event.request.mode === 'navigate') {
-          return caches.match('/');
+          return caches.match('./');
         }
         return new Response('Offline', { status: 503 });
       });

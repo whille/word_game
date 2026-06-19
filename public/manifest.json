@@ -2,14 +2,14 @@
   "name": "文字规则怪谈",
   "short_name": "规则怪谈",
   "description": "Rule horror tree-based text adventure game",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
   "orientation": "any",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "./favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
