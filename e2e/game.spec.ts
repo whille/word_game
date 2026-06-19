@@ -111,3 +111,62 @@ test.describe('Status & Inventory', () => {
     await expect(page.getByRole('button', { name: '🔦 手电筒' })).toBeVisible();
   });
 });
+
+test.describe('Phase 3: Save & Branch Map', () => {
+  test('save manager opens from menu and shows empty state', async ({ page }) => {
+    await page.goto('/');
+    // Open menu
+    await page.locator('text=☰').click();
+    // Click save manager
+    await page.locator('text=💾 存档管理').click();
+    // Should show the save manager
+    await expect(page.locator('text=暂无存档')).toBeVisible();
+  });
+
+  test('auto-save toast appears at branch point', async ({ page }) => {
+    await page.goto('/');
+    // Navigate to living_room (branch point with 3 options)
+    await page.locator('text=仔细阅读住户守则').click();
+    await page.locator('text=翻到下一页').click();
+    await page.locator('text=放下守则，走进客厅').click();
+    // Now click an option at the branch point — auto-save should trigger
+    await page.locator('text=咚、咚、咚——有人敲门').click();
+    // Toast should appear briefly (check within a short window)
+    await expect(page.locator('text=💾 已存档')).toBeVisible();
+  });
+
+  test('branch map opens and shows nodes', async ({ page }) => {
+    await page.goto('/');
+    // Click the branch map button
+    await page.locator('text=🗺️').click();
+    await expect(page.locator('text=分支地图')).toBeVisible();
+    // SVG should be present
+    await expect(page.locator('text=点击节点快速跳转')).toBeVisible();
+  });
+
+  test('ending gallery shows from menu', async ({ page }) => {
+    await page.goto('/');
+    await page.locator('text=☰').click();
+    await page.locator('text=🏆 结局收藏').click();
+    await expect(page.locator('text=结局收藏')).toBeVisible();
+    // Should show progress bar 0/4
+    await expect(page.locator('text=0 / 4 已解锁')).toBeVisible();
+    // Should show locked endings
+    await expect(page.locator('text=未解锁').first()).toBeVisible();
+  });
+
+  test('restart clears snapshots', async ({ page }) => {
+    await page.goto('/');
+    // Make progress to trigger auto-save
+    await page.locator('text=仔细阅读住户守则').click();
+    await page.locator('text=翻到下一页').click();
+    await page.locator('text=放下守则，走进客厅').click();
+    // Restart
+    await page.locator('text=☰').click();
+    await page.locator('text=🔄 重新开始').click();
+    // Open save manager — should be empty
+    await page.locator('text=☰').click();
+    await page.locator('text=💾 存档管理').click();
+    await expect(page.locator('text=暂无存档')).toBeVisible();
+  });
+});

@@ -153,6 +153,7 @@ export function serializeState(state: GameState) {
     expandedNodes: [...state.expandedNodes],
     activeViolations: state.activeViolations,
     discoveredEndings: state.discoveredEndings,
+    currentBackground: state.currentBackground,
   };
 }
 
@@ -168,5 +169,6 @@ export function deserializeState(data: ReturnType<typeof serializeState>): Parti
     expandedNodes: new Set(data.expandedNodes),
     activeViolations: data.activeViolations,
     discoveredEndings: data.discoveredEndings,
+    currentBackground: data.currentBackground ?? null,
   };
 }

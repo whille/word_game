@@ -6,10 +6,18 @@ import { Inventory } from './Inventory';
 import { Notebook } from './Notebook';
 import { useGameStore } from '../store/gameStore';
 import { SoundManager } from '../engine/SoundManager';
+import { ToastContainer } from './Toast';
+import { SaveManager } from './SaveManager';
+import { EndingPanel } from './EndingPanel';
+import { BranchMap } from './BranchMap';
+import { EndingGallery } from './EndingGallery';
 
 export function GameShell() {
   // ---- UI state ----
   const [isNotebookOpen, setNotebookOpen] = useState(false);
+  const [isSaveManagerOpen, setSaveManagerOpen] = useState(false);
+  const [isBranchMapOpen, setBranchMapOpen] = useState(false);
+  const [isGalleryOpen, setGalleryOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(true);
   const [isMenuOpen, setMenuOpen] = useState(false);
@@ -213,6 +221,44 @@ export function GameShell() {
                 boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
               }}>
                 <button
+                  onClick={() => { setSaveManagerOpen(true); setMenuOpen(false); }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 16px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#c4a56a',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    textAlign: 'left',
+                    borderBottom: '1px solid #1a1a28',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#1a1a2e'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                >
+                  💾 存档管理
+                </button>
+                <button
+                  onClick={() => { setGalleryOpen(true); setMenuOpen(false); }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 16px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#8899cc',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    textAlign: 'left',
+                    borderBottom: '1px solid #1a1a28',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#1a1a2e'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                >
+                  🏆 结局收藏
+                </button>
+                <button
                   onClick={handleRestart}
                   style={{
                     display: 'block',
@@ -224,7 +270,6 @@ export function GameShell() {
                     cursor: 'pointer',
                     fontSize: '13px',
                     textAlign: 'left',
-                    borderBottom: '1px solid #1a1a28',
                   }}
                   onMouseEnter={e => { e.currentTarget.style.background = '#1a1a2e'; }}
                   onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
@@ -235,6 +280,22 @@ export function GameShell() {
             </>
           )}
         </div>
+
+        {/* BranchMap toggle */}
+        <button
+          onClick={() => setBranchMapOpen(o => !o)}
+          title="分支地图"
+          style={{
+            background: 'none',
+            border: 'none',
+            color: isBranchMapOpen ? '#c4a56a' : '#666',
+            cursor: 'pointer',
+            fontSize: '14px',
+            padding: '8px 10px',
+          }}
+        >
+          🗺️
+        </button>
 
         {/* Notebook toggle */}
         <button
@@ -305,6 +366,30 @@ export function GameShell() {
         isOpen={isNotebookOpen}
         onClose={() => setNotebookOpen(false)}
       />
+
+      {/* ======== Save Manager ======== */}
+      <SaveManager
+        isOpen={isSaveManagerOpen}
+        onClose={() => setSaveManagerOpen(false)}
+      />
+
+      {/* ======== Ending Panel ======== */}
+      <EndingPanel />
+
+      {/* ======== Branch Map (minimap) ======== */}
+      <BranchMap
+        isOpen={isBranchMapOpen}
+        onClose={() => setBranchMapOpen(false)}
+      />
+
+      {/* ======== Ending Gallery ======== */}
+      <EndingGallery
+        isOpen={isGalleryOpen}
+        onClose={() => setGalleryOpen(false)}
+      />
+
+      {/* ======== Toast Notifications ======== */}
+      <ToastContainer />
     </div>
   );
 }

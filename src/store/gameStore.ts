@@ -3,8 +3,10 @@
 // Never imports from ui/. Pure engine + state.
 
 import { create } from 'zustand';
-import type { GameState, Level, PlayerAction } from '../engine/types';
+import type { GameState, Level, PlayerAction, EndingDef } from '../engine/types';
 import { RuleEvaluator, applyEffect, serializeState, deserializeState } from '../engine/RuleEvaluator';
+import { loadSnapshots, saveSnapshots, clearAllSaves } from '../data/persistence';
+import { showToast } from '../data/toastBus';
 
 // ---- Helper: collect all descendants of a node in expandedNodes ----
 function collectDescendants(
@@ -26,6 +28,7 @@ function collectDescendants(
 // Internal store type extends GameState with actions and hidden fields
 interface StoreState extends GameState {
   _evaluator: RuleEvaluator | null;
+  currentEnding: EndingDef | null; // active ending panel data
 
   // Actions
   initGame: (level: Level) => void;
@@ -53,6 +56,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
   snapshots: [],
   discoveredEndings: [],
 	currentBackground: null,
+  currentEnding: null,
 
   _evaluator: null,
 
@@ -62,6 +66,9 @@ export const useGameStore = create<StoreState>((set, get) => ({
     const evaluator = new RuleEvaluator(level);
     const startNode = level.nodes.find(n => n.id === level.startNodeId);
     if (!startNode) return;
+
+    // Load persisted snapshots from localStorage
+    const persistedSnapshots = loadSnapshots();
 
     set({
       hp: 100,
@@ -84,7 +91,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
       for (const c of ch) s.add(c.targetId);
       return s;
     })(),
-      snapshots: [],
+      snapshots: persistedSnapshots,
       discoveredEndings: [],
       currentBackground: startNode.onEnter?.background ?? null,
 	      _evaluator: evaluator,
@@ -115,6 +122,22 @@ export const useGameStore = create<StoreState>((set, get) => ({
         currentBackground: node.onEnter?.background ?? state.currentBackground,
       });
       return;
+    }
+
+    // Auto-snapshot at branch points (current node has ≥2 visible children)
+    const currentChildren = evaluator.getVisibleChildren(state.currentNodeId, state);
+    if (currentChildren.length >= 2) {
+      const snapshot = {
+        id: `snap_${Date.now()}`,
+        nodeId: state.currentNodeId,
+        label: node.content.slice(0, 16),
+        timestamp: Date.now(),
+        state: serializeState(state),
+      };
+      const newSnapshots = [...state.snapshots, snapshot];
+      saveSnapshots(newSnapshots);
+      showToast('💾 已存档');
+      updates.snapshots = newSnapshots;
     }
 
     // First visit: trigger onEnter effects
@@ -190,6 +213,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
     const ending = evaluator.checkEndings(tempState);
 
     set({
+      ...updates,
       hp: Math.max(0, tempState.hp),
       sanity: Math.max(0, tempState.sanity),
       items: tempState.items,
@@ -203,6 +227,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
         ? [...state.discoveredEndings, ending.id]
         : state.discoveredEndings,
       currentBackground: node.onEnter?.background ?? state.currentBackground,
+      currentEnding: ending ?? null,
     });
   },
 
@@ -234,7 +259,12 @@ export const useGameStore = create<StoreState>((set, get) => ({
         timestamp: Date.now(),
         state: serializeState(state),
       };
-      tempState.snapshots = [...state.snapshots, snapshot];
+      const newSnapshots = [...state.snapshots, snapshot];
+      tempState.snapshots = newSnapshots;
+      // Persist to localStorage
+      saveSnapshots(newSnapshots);
+      // Show toast
+      showToast('💾 已存档');
     }
 
     set({
@@ -289,7 +319,10 @@ export const useGameStore = create<StoreState>((set, get) => ({
       timestamp: Date.now(),
       state: serializeState(state),
     };
-    set({ snapshots: [...state.snapshots, snapshot] });
+    const newSnapshots = [...state.snapshots, snapshot];
+    saveSnapshots(newSnapshots);
+    showToast('💾 手动存档已保存');
+    set({ snapshots: newSnapshots });
   },
 
   restoreSnapshot: (snapshotId: string) => {
@@ -300,6 +333,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
     const restored = deserializeState(snapshot.state);
     set({
       ...restored,
+      currentEnding: null,
     } as Partial<GameState>);
   },
 
@@ -333,6 +367,8 @@ export const useGameStore = create<StoreState>((set, get) => ({
   },
 
   resetGame: () => {
+    // Clear persisted saves
+    clearAllSaves();
     set({
       hp: 100,
       sanity: 100,
@@ -346,6 +382,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
       snapshots: [],
       discoveredEndings: [],
       currentBackground: null,
+      currentEnding: null,
     });
   },
 
