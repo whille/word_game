@@ -1,7 +1,7 @@
 // sw.js — Service Worker for offline PWA support.
 // Cache-first strategy for static assets, network-first for level data.
 
-const CACHE_NAME = 'rule-horror-v1';
+const CACHE_NAME = 'rule-horror-v2';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -34,6 +34,9 @@ self.addEventListener('activate', (event) => {
 // Fetch: cache-first for static, network-first for dynamic
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
+
+  // Only intercept http/https requests — skip chrome-extension, data, blob etc.
+  if (!url.protocol.startsWith('http')) return;
 
   // Network-first for JS/CSS modules (hot-reload in dev)
   if (url.pathname.includes('/src/') || url.pathname.includes('/@')) {
