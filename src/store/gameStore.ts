@@ -72,7 +72,18 @@ export const useGameStore = create<StoreState>((set, get) => ({
       knownRules: new Map(),
       activeViolations: [],
       currentNodeId: level.startNodeId,
-      expandedNodes: new Set([level.startNodeId]),
+      expandedNodes: (() => {
+      const s = new Set<string>([level.startNodeId]);
+      const ch = evaluator.getVisibleChildren(level.startNodeId, {
+        hp: 100, sanity: 100, items: [], flags: new Set(),
+        visitedNodes: new Set([level.startNodeId]), knownRules: new Map(),
+        activeViolations: [], currentNodeId: level.startNodeId,
+        expandedNodes: new Set(), snapshots: [], discoveredEndings: [],
+        currentBackground: null,
+      });
+      for (const c of ch) s.add(c.targetId);
+      return s;
+    })(),
       snapshots: [],
       discoveredEndings: [],
       currentBackground: startNode.onEnter?.background ?? null,

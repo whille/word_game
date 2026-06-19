@@ -33,9 +33,8 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     // Only start drag on left button, not on node cards (those are clicks)
     if (e.button !== 0) return;
-    const target = e.target as HTMLElement;
-    // Don't start drag if clicking on a node card or button
-    if (target.closest('[data-node-card]') || target.closest('button')) return;
+    // Only drag on background click — not on any child (node cards, SVG, etc.)
+    if (e.target !== e.currentTarget) return;
 
     const el = scrollRef.current;
     if (!el) return;
