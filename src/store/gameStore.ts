@@ -94,8 +94,19 @@ export const useGameStore = create<StoreState>((set, get) => ({
     // Mark visited
     const newVisited = new Set(state.visitedNodes);
     newVisited.add(nodeId);
+    const alreadyVisited = state.visitedNodes.has(nodeId);
 
-    // Trigger onEnter effects
+    // Revisit: only switch focus, don't re-trigger effects
+    if (alreadyVisited) {
+      set({
+        currentNodeId: nodeId,
+        visitedNodes: newVisited,
+        currentBackground: node.onEnter?.background ?? state.currentBackground,
+      });
+      return;
+    }
+
+    // First visit: trigger onEnter effects
     if (node.onEnter) {
       if (node.onEnter.addItems) {
         const newItems = [...state.items];

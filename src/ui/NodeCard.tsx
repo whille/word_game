@@ -58,7 +58,7 @@ export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _
   return (
     <div data-node-card style={style} onClick={onClick}>
       <NodeIcon type={type} />
-      <NodeContent content={content} isCurrent={isCurrent} />
+      <NodeContent content={content} isCurrent={isCurrent} isVisited={isVisited} />
       {/* Toggle indicator — only on current node with children */}
       {isCurrent && (
         <span style={{
@@ -99,12 +99,15 @@ function NodeIcon({ type }: { type: NodeType }) {
   return <span style={{ fontSize: '11px', marginRight: '2px' }}>{icon}</span>;
 }
 
-function NodeContent({ content, isCurrent }: { content: string; isCurrent: boolean }) {
+function NodeContent({ content, isCurrent, isVisited }: { content: string; isCurrent: boolean; isVisited: boolean }) {
+  // Hide unvisited node content in tree to avoid spoiling choices
+  const displayText = isVisited || isCurrent ? content : '???';
   return (
     <span style={{
-      color: isCurrent ? '#fff' : '#ccc',
+      color: isCurrent ? '#fff' : isVisited ? '#ccc' : '#555',
+      fontStyle: isVisited || isCurrent ? 'normal' : 'italic',
     }}>
-      {content}
+      {displayText}
     </span>
   );
 }

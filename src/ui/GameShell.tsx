@@ -13,6 +13,7 @@ export function GameShell() {
   const [isNotebookOpen, setNotebookOpen] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(true);
+  const [isMenuOpen, setMenuOpen] = useState(false);
 
   // ---- Sound ----
   const soundRef = useRef<SoundManager | null>(null);
@@ -27,6 +28,8 @@ export function GameShell() {
   const evaluator = useGameStore(s => s.getEvaluator());
   const knownRules = useGameStore(s => s.knownRules);
   const useItem = useGameStore(s => s.useItem);
+  const resetGame = useGameStore(s => s.resetGame);
+  const initGame = useGameStore(s => s.initGame);
   const currentBackground = useGameStore(s => s.currentBackground);
 
   // ---- Background image map (populated later via Minimax generation) ----
@@ -107,6 +110,16 @@ export function GameShell() {
     useItem(itemId, nodeId);
   }, [initAudio, useItem]);
 
+  const handleRestart = useCallback(() => {
+    soundRef.current?.destroy();
+    soundRef.current = null;
+    resetGame();
+    const level = evaluator?.getLevel();
+    if (level) initGame(level);
+    setMenuOpen(false);
+    setIsMuted(true);
+  }, [resetGame, initGame, evaluator]);
+
   return (
     <div style={{
       display: 'flex',
@@ -166,6 +179,63 @@ export function GameShell() {
         )}
 
         <div style={{ flex: 1 }} />
+
+        {/* Menu */}
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setMenuOpen(o => !o)}
+            title="菜单"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: isMenuOpen ? '#ffd700' : '#666',
+              cursor: 'pointer',
+              fontSize: '16px',
+              padding: '8px 10px',
+            }}
+          >
+            ☰
+          </button>
+          {isMenuOpen && (
+            <>
+              <div
+                onClick={() => setMenuOpen(false)}
+                style={{ position: 'fixed', inset: 0, zIndex: 19 }}
+              />
+              <div style={{
+                position: 'absolute',
+                top: '36px',
+                right: 0,
+                background: '#151520',
+                border: '1px solid #2a2a35',
+                borderRadius: '6px',
+                zIndex: 20,
+                minWidth: '140px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+              }}>
+                <button
+                  onClick={handleRestart}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 16px',
+                    background: 'none',
+                    border: 'none',
+                    color: '#ff8888',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    textAlign: 'left',
+                    borderBottom: '1px solid #1a1a28',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#1a1a2e'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                >
+                  🔄 重新开始
+                </button>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Notebook toggle */}
         <button
