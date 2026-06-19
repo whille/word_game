@@ -32,17 +32,24 @@ export function ConnectionLines({ edges }: Props) {
         const y1 = from.y + from.height / 2;
         const x2 = to.x;
         const y2 = to.y - to.height / 2;
-        const mx = (x1 + x2) / 2;
-        const my = (y1 + y2) / 2;
+        // Label at fixed Y offset from parent → all options from same parent align horizontally
+        const LABEL_Y_OFFSET = 70;
+        const labelY = y1 + LABEL_Y_OFFSET;
+        const labelX = (x1 + x2) / 2;
+
+        // Measure approximate label width for column sizing
+        const labelWidth = Math.max(120, Math.min(200, edge.label.length * 16));
 
         return (
           <g key={i}>
-            <line
-              x1={x1} y1={y1} x2={x2} y2={y2}
-              stroke="#555"
-              strokeWidth={1.5}
-              strokeDasharray="6 3"
-              opacity={0.5}
+            {/* Line: parent → label row → child (elbow connector) */}
+            <polyline
+              points={`${x1},${y1} ${x1},${labelY} ${labelX},${labelY} ${x2},${labelY} ${x2},${y2}`}
+              fill="none"
+              stroke="#444"
+              strokeWidth={1.2}
+              strokeDasharray="5 4"
+              opacity={0.45}
               pointerEvents="none"
             />
             <g
@@ -51,9 +58,9 @@ export function ConnectionLines({ edges }: Props) {
               style={{ cursor: 'pointer' }}
             >
               <rect
-                x={mx - 80}
-                y={my - 17}
-                width={160}
+                x={labelX - labelWidth / 2}
+                y={labelY - 17}
+                width={labelWidth}
                 height={34}
                 rx={5}
                 fill="#1a1a28"
@@ -62,8 +69,8 @@ export function ConnectionLines({ edges }: Props) {
                 opacity={0.92}
               />
               <text
-                x={mx}
-                y={my + 5}
+                x={labelX}
+                y={labelY + 5}
                 textAnchor="middle"
                 fill="#8899cc"
                 fontSize="14"
