@@ -1,0 +1,75 @@
+/* index.css — Global reset and dark theme for rule horror game. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a0a;
+  color: #e0e0e0;
+  font-family:
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 3px;
+}
+
+/* Selection */
+::selection {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+/* CSS Text Effects (Phase 2) */
+@keyframes text-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes text-blur {
+  0%, 100% { filter: blur(0); }
+  50% { filter: blur(1px); }
+}
+
+@keyframes text-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+.text-horror {
+  animation: text-flicker 3s infinite;
+}
+
+.text-unstable {
+  animation: text-blur 5s infinite;
+}
+
+.text-shake {
+  animation: text-shake 0.3s ease-in-out;
+}
