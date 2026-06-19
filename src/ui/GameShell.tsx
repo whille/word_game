@@ -12,6 +12,22 @@ import { EndingPanel } from './EndingPanel';
 import { BranchMap } from './BranchMap';
 import { EndingGallery } from './EndingGallery';
 
+// Background images (generated via Minimax, Phase 3.5)
+import hallwayDimImg from '../data/backgrounds/apartment_night/hallway_dim.jpg';
+import redDoorImg from '../data/backgrounds/apartment_night/red_door_room.jpg';
+import apt4fImg from '../data/backgrounds/apartment_night/apartment_4f.jpg';
+import mirrorImg from '../data/backgrounds/apartment_night/mirror_scene.jpg';
+
+type BgKey = 'hallway_dim' | 'red_door_room' | 'apartment_4f' | 'mirror_scene';
+
+/** Module-level constant — values are compile-time resolved by Vite. */
+const bgImages: Record<BgKey, string> = {
+  hallway_dim: hallwayDimImg,
+  red_door_room: redDoorImg,
+  apartment_4f: apt4fImg,
+  mirror_scene: mirrorImg,
+};
+
 export function GameShell() {
   // ---- UI state ----
   const [isNotebookOpen, setNotebookOpen] = useState(false);
@@ -38,15 +54,6 @@ export function GameShell() {
   const resetGame = useGameStore(s => s.resetGame);
   const initGame = useGameStore(s => s.initGame);
   const currentBackground = useGameStore(s => s.currentBackground);
-
-  // ---- Background image map (populated later via Minimax generation) ----
-  const bgImages: Record<string, string> = {
-    // Placeholder — replace with actual generated image URLs
-    hallway_dim: '',  // 昏暗楼道
-    red_door_room: '', // 红色门房间
-    apartment_4f: '',  // 4楼走廊
-    mirror_scene: '',  // 镜子场景
-  };
 
   // Compute contradictions
   const contradictionCount = (() => {
