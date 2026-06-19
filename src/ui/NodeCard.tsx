@@ -37,16 +37,16 @@ export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _
       left: x,
       top: y,
       transform: 'translate(-50%, -50%)',
-      maxWidth: '240px',
-      padding: '14px 18px',
+      maxWidth: '260px',
+      padding: '14px 20px',
       borderRadius: '8px',
       cursor: 'pointer',
       opacity: isVisited && !isCurrent ? 0.45 : 1,
       border,
       background: bgForType(type),
       color: colorForType(type),
-      fontSize: '15px',
-      lineHeight: '1.7',
+      fontSize: '16px',
+      lineHeight: '1.8',
       transition: 'opacity 0.3s, border-color 0.3s, box-shadow 0.3s',
       boxShadow: isValidTarget && !isCurrent ? '0 0 10px rgba(68, 204, 136, 0.25)' : boxShadow,
       userSelect: 'none' as const,
@@ -56,7 +56,7 @@ export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _
   }, [x, y, isCurrent, isVisited, type, isValidTarget]);
 
   return (
-    <div style={style} onClick={onClick}>
+    <div data-node-card style={style} onClick={onClick}>
       <NodeIcon type={type} />
       <NodeContent content={content} isCurrent={isCurrent} />
       {/* Toggle indicator — only on current node with children */}

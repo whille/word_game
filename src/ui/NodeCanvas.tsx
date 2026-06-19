@@ -1,14 +1,12 @@
-// ui/NodeCanvas.tsx — Renders the node tree with dagre layout.
-// Computes positions, renders NodeCards and ConnectionLines,
-// and shows connection options for the current node.
-import { useMemo } from 'react';
+// ui/NodeCanvas.tsx — Tree overview with dagre layout + mouse drag panning.
+import { useMemo, useRef, useState, useCallback } from 'react';
 import dagre from 'dagre';
 import { useGameStore } from '../store/gameStore';
 import { NodeCard } from './NodeCard';
 import { ConnectionLines } from './ConnectionLines';
 import type { LayoutNode } from '../engine/types';
 
-const NODE_WIDTH = 240;
+const NODE_WIDTH = 260;
 const NODE_HEIGHT = 120;
 
 interface NodeCanvasProps {
@@ -24,26 +22,55 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
   const clickNode = useGameStore(s => s.clickNode);
   const toggleNodeCollapse = useGameStore(s => s.toggleNodeCollapse);
 
-  // Compute layout
+  // ---- Drag-to-pan state ----
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, scrollX: 0, scrollY: 0 });
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Only start drag on left button, not on node cards (those are clicks)
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    // Don't start drag if clicking on a node card or button
+    if (target.closest('[data-node-card]') || target.closest('button')) return;
+
+    const el = scrollRef.current;
+    if (!el) return;
+    setIsDragging(true);
+    dragStart.current = { x: e.clientX, y: e.clientY, scrollX: el.scrollLeft, scrollY: el.scrollTop };
+    e.preventDefault();
+  }, []);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    const dx = e.clientX - dragStart.current.x;
+    const dy = e.clientY - dragStart.current.y;
+    el.scrollLeft = dragStart.current.scrollX - dx;
+    el.scrollTop = dragStart.current.scrollY - dy;
+  }, [isDragging]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  // ---- Compute layout ----
   const { layoutNodes, edges } = useMemo(() => {
     if (!evaluator) return { layoutNodes: [], edges: [] };
 
     const level = evaluator.getLevel();
     const g = new dagre.graphlib.Graph();
-    g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 120, marginx: 40, marginy: 40 });
+    g.setGraph({ rankdir: 'TB', nodesep: 70, ranksep: 140, marginx: 50, marginy: 50 });
     g.setDefaultEdgeLabel(() => ({}));
 
     for (const node of level.nodes) {
       if (!expandedNodes.has(node.id)) continue;
-      const w = node.position ? NODE_WIDTH : NODE_WIDTH;
-      const h = NODE_HEIGHT;
-      g.setNode(node.id, { width: w, height: h });
+      g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
       if (node.position) {
         g.node(node.id).x = node.position.x;
         g.node(node.id).y = node.position.y;
       }
-
-      // Add edges to expanded children
       for (const child of node.children) {
         if (expandedNodes.has(child.targetId)) {
           g.setEdge(node.id, child.targetId);
@@ -51,13 +78,10 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
       }
     }
 
-    // Only run layout if there are nodes without manual positions
     const hasAutoNodes = level.nodes.some(
       n => expandedNodes.has(n.id) && !n.position,
     );
-    if (hasAutoNodes) {
-      dagre.layout(g);
-    }
+    if (hasAutoNodes) dagre.layout(g);
 
     const layoutNodes: LayoutNode[] = [];
     for (const node of level.nodes) {
@@ -74,7 +98,6 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
       }
     }
 
-    // Build edges for rendering
     const edges = [];
     for (const node of level.nodes) {
       if (!expandedNodes.has(node.id)) continue;
@@ -90,13 +113,11 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
     return { layoutNodes, edges };
   }, [evaluator, expandedNodes]);
 
-  // Compute valid target nodes for selected item
+  // Compute valid targets for selected item
   const validTargets = useMemo(() => {
     if (!selectedItemId || !evaluator) return new Set<string>();
-    const level = evaluator.getLevel();
-    const item = level.items.find(i => i.id === selectedItemId);
-    if (!item) return new Set<string>();
-    return new Set(item.usableOn);
+    const item = evaluator.getLevel().items.find(i => i.id === selectedItemId);
+    return item ? new Set(item.usableOn) : new Set();
   }, [selectedItemId, evaluator]);
 
   // Find SVG bounds
@@ -113,22 +134,37 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
   }, [layoutNodes]);
 
   if (!evaluator) {
-    return <div style={{ padding: '2rem', color: '#aaa' }}>加载关卡中...</div>;
+    return <div style={{ padding: '2rem', color: '#aaa', textAlign: 'center' }}>加载关卡中...</div>;
   }
 
   return (
-    <div style={{
-      flex: 1,
-      overflow: 'auto',
-      position: 'relative',
-      background: '#0a0a0a',
-      minHeight: '400px',
-    }}>
+    <div
+      ref={scrollRef}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      style={{
+        flex: 1,
+        overflow: 'auto',
+        position: 'relative',
+        background: `
+          #0a0a0a
+          linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)
+        `,
+        backgroundSize: '40px 40px',
+        minHeight: '300px',
+        cursor: isDragging ? 'grabbing' : 'grab',
+        userSelect: 'none',
+      }}
+    >
       <div style={{
         position: 'relative',
         width: bounds.width,
         height: bounds.height,
         minWidth: '100%',
+        pointerEvents: isDragging ? 'none' : 'auto',
       }}>
         <ConnectionLines edges={edges} />
 
@@ -137,7 +173,6 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
           if (!node) return null;
           const isTarget = validTargets.has(ln.nodeId);
           const isCurrent = ln.nodeId === currentNodeId;
-          // Check if this node has expanded children in the tree
           const hasExpandedChildren = node.children.some(c => expandedNodes.has(c.targetId));
           return (
             <NodeCard
@@ -152,6 +187,7 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
               isValidTarget={isTarget}
               hasExpandedChildren={hasExpandedChildren}
               onClick={() => {
+                if (isDragging) return;
                 if (selectedItemId && isTarget) {
                   onItemUse(selectedItemId, ln.nodeId);
                   onItemDeselect();
@@ -165,6 +201,20 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
           );
         })}
 
+        {/* Drag hint — shown briefly on empty canvas */}
+        {layoutNodes.length <= 2 && (
+          <div style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            color: '#444',
+            fontSize: '12px',
+            pointerEvents: 'none',
+          }}>
+            🖱️ 拖拽可移动画布
+          </div>
+        )}
       </div>
     </div>
   );

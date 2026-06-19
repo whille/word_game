@@ -62,8 +62,8 @@ export function ReadingPanel({ selectedItemId, onItemUse, onItemDeselect }: Read
 
       {/* Main content — large readable text */}
       <div style={{
-        fontSize: '20px',
-        lineHeight: '1.8',
+        fontSize: '24px',
+        lineHeight: '1.9',
         color: '#e8e0d0',
         fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Serif SC", serif',
         letterSpacing: '0.5px',
@@ -119,7 +119,7 @@ export function ReadingPanel({ selectedItemId, onItemUse, onItemDeselect }: Read
                   : '1px solid #2a2a35',
                 borderRadius: '8px',
                 cursor: 'pointer',
-                fontSize: '15px',
+                fontSize: '17px',
                 fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
                 transition: 'all 0.15s',
                 display: 'flex',
