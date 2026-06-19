@@ -1,8 +1,8 @@
-// ui/GameShell.tsx — Layout container. Wires all Phase 2 modules:
-// StatusBar + NodeCanvas + Inventory + Notebook + SoundManager + Contradiction hints.
+// ui/GameShell.tsx — Split layout: StatusBar + ReadingPanel (top) + TreeCanvas (bottom) + Inventory.
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { StatusBar } from './StatusBar';
 import { NodeCanvas } from './NodeCanvas';
+import { ReadingPanel } from './ReadingPanel';
 import { Inventory } from './Inventory';
 import { Notebook } from './Notebook';
 import { useGameStore } from '../store/gameStore';
@@ -16,9 +16,9 @@ export function GameShell() {
 
   // ---- Sound ----
   const soundRef = useRef<SoundManager | null>(null);
-  const prevNodeIdRef = useRef<string>('');
-  const prevViolationCountRef = useRef<number>(0);
-  const prevEndingCountRef = useRef<number>(0);
+  const prevNodeIdRef = useRef('');
+  const prevViolationCountRef = useRef(0);
+  const prevEndingCountRef = useRef(0);
 
   // Store subscriptions
   const currentNodeId = useGameStore(s => s.currentNodeId);
@@ -28,30 +28,27 @@ export function GameShell() {
   const knownRules = useGameStore(s => s.knownRules);
   const useItem = useGameStore(s => s.useItem);
 
-  // Compute contradictions for hint display
+  // Compute contradictions
   const contradictionCount = (() => {
     if (!evaluator) return 0;
     return evaluator.findContradictions(useGameStore.getState()).length;
   })();
 
-  // ---- Sound Effects via state watching ----
+  // ---- Sound Effects ----
   useEffect(() => {
     const s = soundRef.current;
     if (!s || isMuted) return;
 
-    // Node changed → click sound
     if (currentNodeId && currentNodeId !== prevNodeIdRef.current) {
       s.playStinger('click');
       prevNodeIdRef.current = currentNodeId;
     }
 
-    // New violation → violation sound
     if (activeViolations.length > prevViolationCountRef.current) {
       s.playStinger('violation');
     }
     prevViolationCountRef.current = activeViolations.length;
 
-    // New ending discovered → death or true ending sound
     if (discoveredEndings.length > prevEndingCountRef.current) {
       const latestId = discoveredEndings[discoveredEndings.length - 1];
       const ending = evaluator?.getLevel().endings.find(e => e.id === latestId);
@@ -66,7 +63,6 @@ export function GameShell() {
     prevEndingCountRef.current = discoveredEndings.length;
   }, [currentNodeId, activeViolations.length, discoveredEndings.length, isMuted, evaluator]);
 
-  // Contradiction sound
   const prevContradictionRef = useRef(0);
   useEffect(() => {
     const s = soundRef.current;
@@ -77,7 +73,7 @@ export function GameShell() {
     prevContradictionRef.current = contradictionCount;
   }, [contradictionCount, isMuted]);
 
-  // ---- Audio init on first interaction ----
+  // ---- Audio init ----
   const initAudio = useCallback(() => {
     if (!soundRef.current) {
       soundRef.current = new SoundManager();
@@ -86,7 +82,6 @@ export function GameShell() {
     }
   }, []);
 
-  // ---- Handlers ----
   const handleToggleMute = () => {
     initAudio();
     const s = soundRef.current;
@@ -102,24 +97,17 @@ export function GameShell() {
     useItem(itemId, nodeId);
   }, [initAudio, useItem]);
 
-  const handleNodeClick = () => {
-    initAudio();
-  };
-
   return (
-    <div
-      onClick={handleNodeClick}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        background: '#0a0a0a',
-        color: '#e0e0e0',
-        fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Top bar: StatusBar + Controls */}
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      background: '#0a0a0a',
+      color: '#e0e0e0',
+      fontFamily: '"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif',
+      overflow: 'hidden',
+    }}>
+      {/* ======== Top Bar: Status + Controls ======== */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -134,7 +122,7 @@ export function GameShell() {
         {contradictionCount > 0 && (
           <button
             onClick={() => setNotebookOpen(true)}
-            title="规则存在矛盾 — 点击查看笔记"
+            title="规则存在矛盾"
             style={{
               background: 'rgba(255, 80, 80, 0.12)',
               border: '1px solid rgba(255, 80, 80, 0.25)',
@@ -156,7 +144,7 @@ export function GameShell() {
         {/* Notebook toggle */}
         <button
           onClick={() => setNotebookOpen(o => !o)}
-          title="笔记 — 已发现规则"
+          title="笔记"
           style={{
             background: 'none',
             border: 'none',
@@ -204,20 +192,27 @@ export function GameShell() {
         </button>
       </div>
 
-      {/* Main canvas */}
+      {/* ======== Reading Panel: current node + actions ======== */}
+      <ReadingPanel
+        selectedItemId={selectedItemId}
+        onItemUse={handleItemUse}
+        onItemDeselect={() => setSelectedItemId(null)}
+      />
+
+      {/* ======== Tree Overview: scrollable node map ======== */}
       <NodeCanvas
         selectedItemId={selectedItemId}
         onItemUse={handleItemUse}
         onItemDeselect={() => setSelectedItemId(null)}
       />
 
-      {/* Inventory bar */}
+      {/* ======== Inventory Bar ======== */}
       <Inventory
         selectedItemId={selectedItemId}
         onSelectItem={setSelectedItemId}
       />
 
-      {/* Notebook slide-out */}
+      {/* ======== Notebook Slide-out ======== */}
       <Notebook
         isOpen={isNotebookOpen}
         onClose={() => setNotebookOpen(false)}

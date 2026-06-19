@@ -6,10 +6,10 @@ import dagre from 'dagre';
 import { useGameStore } from '../store/gameStore';
 import { NodeCard } from './NodeCard';
 import { ConnectionLines } from './ConnectionLines';
-import type { LayoutNode, Connection } from '../engine/types';
+import type { LayoutNode } from '../engine/types';
 
-const NODE_WIDTH = 200;
-const NODE_HEIGHT = 100;
+const NODE_WIDTH = 240;
+const NODE_HEIGHT = 120;
 
 interface NodeCanvasProps {
   selectedItemId: string | null;
@@ -21,7 +21,6 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
   const evaluator = useGameStore(s => s.getEvaluator());
   const expandedNodes = useGameStore(s => s.expandedNodes);
   const currentNodeId = useGameStore(s => s.currentNodeId);
-  const selectConnection = useGameStore(s => s.selectConnection);
   const clickNode = useGameStore(s => s.clickNode);
 
   // Compute layout
@@ -99,12 +98,6 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
     return new Set(item.usableOn);
   }, [selectedItemId, evaluator]);
 
-  // Current node data
-  const currentNode = evaluator?.getNode(currentNodeId);
-  const visibleConnections: Connection[] = currentNode
-    ? evaluator!.getVisibleChildren(currentNodeId, useGameStore.getState())
-    : [];
-
   // Find SVG bounds
   const bounds = useMemo(() => {
     if (layoutNodes.length === 0) return { width: 800, height: 600 };
@@ -165,54 +158,6 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
           );
         })}
 
-        {/* Connection options for current node */}
-        {visibleConnections.length > 0 && (
-          <div style={{
-            position: 'absolute',
-            left: (layoutNodes.find(ln => ln.nodeId === currentNodeId)?.x ?? 400) + NODE_WIDTH / 2 + 30,
-            top: layoutNodes.find(ln => ln.nodeId === currentNodeId)?.y ?? 300,
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px',
-            zIndex: 5,
-          }}>
-            {visibleConnections.map((conn, idx) => (
-              <button
-                key={idx}
-                onClick={() => selectConnection(idx)}
-                style={{
-                  padding: '8px 16px',
-                  background: '#1a1a2e',
-                  color: '#7ec8e3',
-                  border: '1px solid #333',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '13px',
-                  textAlign: 'left',
-                  whiteSpace: 'nowrap',
-                  transition: 'background 0.2s, border-color 0.2s',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.background = '#222244';
-                  e.currentTarget.style.borderColor = '#4488ff';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.background = '#1a1a2e';
-                  e.currentTarget.style.borderColor = '#333';
-                }}
-              >
-                {conn.label}
-                {conn.cost && (
-                  <span style={{ fontSize: '10px', color: '#888', marginLeft: '8px' }}>
-                    {conn.cost.hp ? `生命${conn.cost.hp > 0 ? '+' : ''}${conn.cost.hp}` : ''}
-                    {conn.cost.sanity ? ` 理智${conn.cost.sanity > 0 ? '+' : ''}${conn.cost.sanity}` : ''}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
