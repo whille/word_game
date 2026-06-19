@@ -193,6 +193,7 @@
       "children": [
         { "targetId": "escape_4f", "label": "用红色钥匙打开逃生门",
           "conditions": ["has_item('red_key')"] },
+        { "targetId": "run_4f", "label": "沿走廊拼命奔跑——不管方向" },
         { "targetId": "ending_death", "label": "...跑不动了",
           "conditions": ["has_flag('saw_entity')"] }
       ]
@@ -208,6 +209,18 @@
       },
       "children": [
         { "targetId": "back_to_room", "label": "蹒跚回到自己房间" }
+      ]
+    },
+    {
+      "id": "run_4f",
+      "type": "action",
+      "content": "你在伸手不见五指的走廊里狂奔。手印墙变成了无数条手臂在身侧挥舞，指甲擦过你的衣袖。一扇普通的安全门突然出现在前方——你撞了上去。",
+      "onEnter": {
+        "setFlag": "ran_4f",
+        "effects": [{ "hp": -15, "sanity": -10, "narrative": "你感觉有什么东西抓了你一把" }]
+      },
+      "children": [
+        { "targetId": "back_to_room", "label": "撞开门，跌回自己楼层" }
       ]
     },
     {
