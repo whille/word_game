@@ -23,14 +23,7 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
   const toggleNodeCollapse = useGameStore(s => s.toggleNodeCollapse);
   const visitedNodes = useGameStore(s => s.visitedNodes);
 
-  // Nodes that are children of the current node — styled as "options"
-  const optionNodeIds = useMemo(() => {
-    if (!evaluator || !currentNodeId) return new Set<string>();
-    const node = evaluator.getNode(currentNodeId);
-    if (!node) return new Set<string>();
-    const visible = evaluator.getVisibleChildren(currentNodeId, useGameStore.getState());
-    return new Set(visible.map(c => c.targetId));
-  }, [evaluator, currentNodeId]);
+
 
   // ---- Drag-to-pan state ----
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -198,11 +191,10 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
 
           const isTarget = validTargets.has(ln.nodeId);
           const isCurrent = ln.nodeId === currentNodeId;
-          const isOption = optionNodeIds.has(ln.nodeId);
           const isVisited = visitedNodes.has(ln.nodeId);
 
-          // Only render: current, visited, or option nodes
-          if (!isCurrent && !isVisited && !isOption) return null;
+          // Only render current or visited nodes — options are edge labels only
+          if (!isCurrent && !isVisited) return null;
 
           const hasExpandedChildren = node.children.some(c => expandedNodes.has(c.targetId));
           return (
@@ -217,8 +209,7 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
               isExpanded={expandedNodes.has(ln.nodeId)}
               isValidTarget={isTarget}
               hasExpandedChildren={hasExpandedChildren}
-              isOption={isOption}
-              onClick={() => {
+                            onClick={() => {
                 if (isDragging) return;
                 if (selectedItemId && isTarget) {
                   onItemUse(selectedItemId, ln.nodeId);

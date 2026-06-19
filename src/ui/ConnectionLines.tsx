@@ -4,8 +4,8 @@ import type { LayoutNode } from '../engine/types';
 export interface Edge {
   from: LayoutNode;
   to: LayoutNode;
-  label: string; // connection label text
-  onLabelClick: () => void; // navigate when label clicked
+  label: string;
+  onLabelClick: () => void;
 }
 
 interface Props {
@@ -22,6 +22,10 @@ export function ConnectionLines({ edges }: Props) {
       height: '100%',
       zIndex: 0,
     }}>
+      <style>{`
+        g.edge-label:hover rect { fill: #2a2a3e; stroke: #7788bb; }
+        g.edge-label:hover text { fill: #ccddff; }
+      `}</style>
       {edges.map((edge, i) => {
         const { from, to } = edge;
         const x1 = from.x;
@@ -33,7 +37,6 @@ export function ConnectionLines({ edges }: Props) {
 
         return (
           <g key={i}>
-            {/* Line */}
             <line
               x1={x1} y1={y1} x2={x2} y2={y2}
               stroke="#555"
@@ -42,30 +45,28 @@ export function ConnectionLines({ edges }: Props) {
               opacity={0.5}
               pointerEvents="none"
             />
-            {/* Clickable label at midpoint */}
             <g
+              className="edge-label"
               onClick={edge.onLabelClick}
               style={{ cursor: 'pointer' }}
             >
-              {/* Background pill */}
               <rect
-                x={mx - 50}
-                y={my - 13}
-                width={100}
-                height={26}
-                rx={4}
+                x={mx - 80}
+                y={my - 17}
+                width={160}
+                height={34}
+                rx={5}
                 fill="#1a1a28"
                 stroke="#444"
                 strokeWidth={1}
-                opacity={0.9}
+                opacity={0.92}
               />
-              {/* Label text */}
               <text
                 x={mx}
-                y={my + 4}
+                y={my + 5}
                 textAnchor="middle"
                 fill="#8899cc"
-                fontSize="12"
+                fontSize="14"
                 fontFamily='"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif'
               >
                 {edge.label}
