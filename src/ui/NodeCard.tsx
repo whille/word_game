@@ -1,4 +1,7 @@
-// ui/NodeCard.tsx — Clickable text node with type icon and CSS effects.
+// ui/NodeCard.tsx — Clickable text node. Three visual modes:
+// 1. current: gold glow, prominent
+// 2. option: child of current node, dashed border, arrow icon — "clickable choice"
+// 3. visited: dimmed, normal card
 import { useGameStore } from '../store/gameStore';
 import type { NodeType } from '../engine/types';
 import { useMemo } from 'react';
@@ -13,23 +16,34 @@ interface NodeCardProps {
   isExpanded: boolean;
   isValidTarget: boolean;
   hasExpandedChildren: boolean;
+  isOption: boolean; // child of current node — styled as a clickable choice
   onClick: () => void;
 }
 
-export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _isExpanded, isValidTarget, hasExpandedChildren, onClick }: NodeCardProps) {
+export function NodeCard({
+  nodeId, content, type, x, y, isCurrent, isExpanded: _isExpanded,
+  isValidTarget, hasExpandedChildren, isOption, onClick,
+}: NodeCardProps) {
   const isVisited = useGameStore(s => s.visitedNodes.has(nodeId));
 
   const style = useMemo(() => {
     const animClass = animationForType(type);
-    // Determine border: gold for current, green pulse for valid item target
-    let border = '2px solid transparent';
-    let boxShadow = 'none';
+
+    // Border & shadow logic
+    let border: string;
+    let boxShadow: string;
     if (isCurrent) {
       border = '2px solid #ffd700';
-      boxShadow = '0 0 12px rgba(255, 215, 0, 0.3)';
+      boxShadow = '0 0 16px rgba(255, 215, 0, 0.35)';
     } else if (isValidTarget) {
       border = '2px solid #44cc88';
       boxShadow = '0 0 10px rgba(68, 204, 136, 0.25)';
+    } else if (isOption) {
+      border = '1.5px dashed #666';
+      boxShadow = 'none';
+    } else {
+      border = '2px solid transparent';
+      boxShadow = 'none';
     }
 
     return {
@@ -37,38 +51,51 @@ export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _
       left: x,
       top: y,
       transform: 'translate(-50%, -50%)',
-      maxWidth: '260px',
-      padding: '14px 20px',
+      maxWidth: isCurrent ? '300px' : '240px',
+      padding: isCurrent ? '16px 22px' : '12px 16px',
       borderRadius: '8px',
       cursor: 'pointer',
-      opacity: isVisited && !isCurrent ? 0.45 : 1,
+      opacity: isVisited && !isCurrent && !isOption ? 0.45 : 1,
       border,
-      background: bgForType(type),
+      background: isOption ? '#12121c' : bgForType(type),
       color: colorForType(type),
-      fontSize: '16px',
+      fontSize: isCurrent ? '18px' : isOption ? '14px' : '15px',
       lineHeight: '1.8',
-      transition: 'opacity 0.3s, border-color 0.3s, box-shadow 0.3s',
-      boxShadow: isValidTarget && !isCurrent ? '0 0 10px rgba(68, 204, 136, 0.25)' : boxShadow,
+      transition: 'opacity 0.3s, border-color 0.3s, box-shadow 0.3s, max-width 0.3s, padding 0.3s, font-size 0.3s',
+      boxShadow,
       userSelect: 'none' as const,
-      zIndex: isCurrent ? 2 : 1,
+      zIndex: isCurrent ? 3 : isOption ? 2 : 1,
       animation: isValidTarget ? `${animClass}, box-horror-pulse 2s infinite` : animClass,
     };
-  }, [x, y, isCurrent, isVisited, type, isValidTarget]);
+  }, [x, y, isCurrent, isVisited, type, isValidTarget, isOption]);
 
   return (
     <div data-node-card style={style} onClick={onClick}>
+      {/* Option arrow */}
+      {isOption && (
+        <span style={{
+          position: 'absolute',
+          left: '-10px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          color: '#888',
+          fontSize: '12px',
+        }}>
+          ▸
+        </span>
+      )}
       <NodeIcon type={type} />
-      <NodeContent content={content} isCurrent={isCurrent} isVisited={isVisited} />
-      {/* Toggle indicator — only on current node with children */}
+      <NodeContent content={content} isCurrent={isCurrent} isOption={isOption} />
+      {/* Toggle indicator on current node */}
       {isCurrent && (
         <span style={{
           position: 'absolute',
-          top: '-8px',
-          right: '-8px',
-          width: '20px',
-          height: '20px',
+          top: '-10px',
+          right: '-10px',
+          width: '22px',
+          height: '22px',
           borderRadius: '50%',
-          background: hasExpandedChildren ? '#333' : '#1a2a1a',
+          background: hasExpandedChildren ? '#2a2a2a' : '#1a2a1a',
           border: hasExpandedChildren ? '1px solid #888' : '1px solid #44aa66',
           display: 'flex',
           alignItems: 'center',
@@ -94,20 +121,18 @@ function NodeIcon({ type }: { type: NodeType }) {
     monster: '🩸 ',
     ending: '⏹ ',
   }[type];
-
   if (!icon) return null;
   return <span style={{ fontSize: '11px', marginRight: '2px' }}>{icon}</span>;
 }
 
-function NodeContent({ content, isCurrent, isVisited }: { content: string; isCurrent: boolean; isVisited: boolean }) {
-  // Hide unvisited node content in tree to avoid spoiling choices
-  const displayText = isVisited || isCurrent ? content : '???';
+function NodeContent({ content, isCurrent, isOption }: {
+  content: string; isCurrent: boolean; isOption: boolean;
+}) {
   return (
     <span style={{
-      color: isCurrent ? '#fff' : isVisited ? '#ccc' : '#555',
-      fontStyle: isVisited || isCurrent ? 'normal' : 'italic',
+      color: isCurrent ? '#fff' : isOption ? '#aab' : '#ccc',
     }}>
-      {displayText}
+      {content}
     </span>
   );
 }
@@ -136,22 +161,12 @@ function colorForType(type: NodeType): string {
   }
 }
 
-/** CSS animation string applied based on node type for horror atmosphere. */
 function animationForType(type: NodeType): string {
   switch (type) {
-    case 'clue':
-      // Clue text flickers — unstable, partially hidden truth
-      return 'text-flicker 4s infinite';
-    case 'monster':
-      // Monster nodes shake + red pulse background
-      return 'text-shake 0.4s ease-in-out, box-horror-pulse 3s infinite';
-    case 'action':
-      // Action nodes have subtle golden glow — items of power
-      return 'text-glow-pulse 4s infinite';
-    case 'ending':
-      // Ending nodes blur and color-shift — reality breaking
-      return 'text-blur 6s infinite, text-color-shift 8s infinite';
-    default:
-      return 'none';
+    case 'clue': return 'text-flicker 4s infinite';
+    case 'monster': return 'text-shake 0.4s ease-in-out, box-horror-pulse 3s infinite';
+    case 'action': return 'text-glow-pulse 4s infinite';
+    case 'ending': return 'text-blur 6s infinite, text-color-shift 8s infinite';
+    default: return 'none';
   }
 }

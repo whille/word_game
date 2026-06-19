@@ -21,6 +21,16 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
   const currentNodeId = useGameStore(s => s.currentNodeId);
   const clickNode = useGameStore(s => s.clickNode);
   const toggleNodeCollapse = useGameStore(s => s.toggleNodeCollapse);
+  const visitedNodes = useGameStore(s => s.visitedNodes);
+
+  // Nodes that are children of the current node — styled as "options"
+  const optionNodeIds = useMemo(() => {
+    if (!evaluator || !currentNodeId) return new Set<string>();
+    const node = evaluator.getNode(currentNodeId);
+    if (!node) return new Set<string>();
+    const visible = evaluator.getVisibleChildren(currentNodeId, useGameStore.getState());
+    return new Set(visible.map(c => c.targetId));
+  }, [evaluator, currentNodeId]);
 
   // ---- Drag-to-pan state ----
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -56,7 +66,7 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
   }, []);
 
   // ---- Compute layout ----
-  const { layoutNodes, edges } = useMemo(() => {
+  const { layoutNodes, edges: edgesWithLabels } = useMemo(() => {
     if (!evaluator) return { layoutNodes: [], edges: [] };
 
     const level = evaluator.getLevel();
@@ -98,7 +108,7 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
       }
     }
 
-    const edges = [];
+    const edges: { from: LayoutNode; to: LayoutNode; label: string; targetId: string }[] = [];
     for (const node of level.nodes) {
       if (!expandedNodes.has(node.id)) continue;
       const from = layoutNodes.find(ln => ln.nodeId === node.id);
@@ -106,7 +116,9 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
       for (const child of node.children) {
         if (!expandedNodes.has(child.targetId)) continue;
         const to = layoutNodes.find(ln => ln.nodeId === child.targetId);
-        if (to) edges.push({ from, to });
+        if (to) {
+          edges.push({ from, to, label: child.label, targetId: child.targetId });
+        }
       }
     }
 
@@ -166,13 +178,32 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
         minWidth: '100%',
         pointerEvents: isDragging ? 'none' : 'auto',
       }}>
-        <ConnectionLines edges={edges} />
+        <ConnectionLines edges={edgesWithLabels.map(e => ({
+            from: e.from,
+            to: e.to,
+            label: e.label,
+            onLabelClick: () => {
+              if (selectedItemId && validTargets.has(e.targetId)) {
+                onItemUse(selectedItemId, e.targetId);
+                onItemDeselect();
+              } else {
+                clickNode(e.targetId);
+              }
+            },
+          }))} />
 
         {layoutNodes.map(ln => {
           const node = evaluator.getLevel().nodes.find(n => n.id === ln.nodeId);
           if (!node) return null;
+
           const isTarget = validTargets.has(ln.nodeId);
           const isCurrent = ln.nodeId === currentNodeId;
+          const isOption = optionNodeIds.has(ln.nodeId);
+          const isVisited = visitedNodes.has(ln.nodeId);
+
+          // Only render: current, visited, or option nodes
+          if (!isCurrent && !isVisited && !isOption) return null;
+
           const hasExpandedChildren = node.children.some(c => expandedNodes.has(c.targetId));
           return (
             <NodeCard
@@ -186,6 +217,7 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
               isExpanded={expandedNodes.has(ln.nodeId)}
               isValidTarget={isTarget}
               hasExpandedChildren={hasExpandedChildren}
+              isOption={isOption}
               onClick={() => {
                 if (isDragging) return;
                 if (selectedItemId && isTarget) {

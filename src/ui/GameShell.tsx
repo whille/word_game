@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { StatusBar } from './StatusBar';
 import { NodeCanvas } from './NodeCanvas';
-import { ReadingPanel } from './ReadingPanel';
 import { Inventory } from './Inventory';
 import { Notebook } from './Notebook';
 import { useGameStore } from '../store/gameStore';
@@ -288,14 +287,7 @@ export function GameShell() {
         </button>
       </div>
 
-      {/* ======== Reading Panel: current node + actions ======== */}
-      <ReadingPanel
-        selectedItemId={selectedItemId}
-        onItemUse={handleItemUse}
-        onItemDeselect={() => setSelectedItemId(null)}
-      />
-
-      {/* ======== Tree Overview: scrollable node map ======== */}
+      {/* ======== Tree Canvas ======== */}
       <NodeCanvas
         selectedItemId={selectedItemId}
         onItemUse={handleItemUse}
