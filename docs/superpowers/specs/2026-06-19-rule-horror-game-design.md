@@ -177,7 +177,28 @@ hp < 20
 "conditions": [{"or": ["has_item('key')", "sanity >= 50"]}] // OR
 ```
 
-### 4.5 Item & Ending
+### 4.5 Shared Types
+
+```typescript
+// Effect — stat deltas triggered by costs, violations, onEnter, etc.
+interface Effect {
+  hp?: number;           // delta (negative = damage)
+  sanity?: number;       // delta (negative = horror)
+  addItems?: string[];   // item IDs to add
+  removeItems?: string[];
+  setFlag?: string;      // boolean flag name
+  narrative?: string;    // flavor text
+}
+
+// RuleTrigger — when a rule's violation condition is checked
+interface RuleTrigger {
+  on: 'node_enter' | 'node_exit' | 'item_use' | 'always';
+  nodeId?: string;       // scope to specific node
+  itemId?: string;       // scope to specific item
+}
+```
+
+### 4.6 Item & Ending
 
 ```typescript
 interface ItemDef {
@@ -193,6 +214,27 @@ interface EndingDef {
   type: 'true' | 'bad' | 'death' | 'neutral';
   conditions: Condition[];
   narrative: string;
+}
+```
+
+### 4.7 Snapshot (Phase 3)
+
+```typescript
+interface Snapshot {
+  id: string;               // unique snapshot ID
+  nodeId: string;           // which node the snapshot was taken at
+  label: string;            // human-readable (e.g. "选择了推开门")
+  timestamp: number;
+  state: {
+    hp: number;
+    sanity: number;
+    items: string[];
+    flags: string[];        // Set serialized to array
+    knownRules: [string, string][];  // Map serialized to entries
+    visitedNodes: string[];
+    currentNodeId: string;
+    expandedNodes: string[];
+  };
 }
 ```
 
@@ -244,6 +286,66 @@ When player has discovered ≥2 rules where one's `contradicts` array contains t
 ---
 
 ## 6. Component Tree
+
+### 6.0 Program Structure (Validated)
+
+```
+src/
+├── engine/               # Pure TS — zero React imports. Testable without jsdom.
+│   ├── types.ts          # ALL interfaces (single source of truth)
+│   ├── ConditionParser.ts
+│   ├── RuleEvaluator.ts
+│   ├── NodeManager.ts    # tree expand/collapse + layout trigger
+│   └── __tests__/
+│       ├── ConditionParser.test.ts
+│       └── RuleEvaluator.test.ts
+│
+├── store/
+│   └── gameStore.ts      # Zustand — THE orchestrator.
+│                          # Actions call engine, mutate state, trigger UI.
+│
+├── ui/                   # React components
+│   ├── App.tsx
+│   ├── GameShell.tsx     # layout container
+│   ├── StatusBar.tsx
+│   ├── NodeCanvas.tsx    # dagre layout + render NodeCards + ConnectionLines
+│   ├── NodeCard.tsx
+│   ├── ConnectionLines.tsx
+│   ├── ErrorBoundary.tsx
+│   └── LevelLoadError.tsx
+│
+├── data/                 # Static assets + load-time validation
+│   ├── schema.ts         # Zod validators + cycle detection
+│   └── levels/
+│       └── tutorial.json
+│
+├── main.tsx
+└── index.css
+```
+
+**Import dependency graph (acyclic DAG):**
+```
+data/schema.ts           → engine/types.ts
+engine/ConditionParser.ts → engine/types.ts
+engine/RuleEvaluator.ts  → engine/types.ts, engine/ConditionParser.ts
+engine/NodeManager.ts    → engine/types.ts
+store/gameStore.ts       → engine/types.ts, engine/RuleEvaluator.ts, engine/NodeManager.ts
+ui/*.tsx                 → store/gameStore.ts, engine/types.ts
+```
+
+**Design rules:**
+- `engine/` never imports from `store/` or `ui/` — pure logic
+- `store/` never imports from `ui/` — state doesn't know about rendering
+- `ui/` reads from `store/` via Zustand hooks + imports types from `engine/`
+- `data/schema.ts` only imported at level load boundary (App.tsx or GameShell.tsx)
+- **Zustand actions are the orchestrator** — no separate GameController class needed. `clickNode()` action calls RuleEvaluator, applies effects, calls NodeManager, updates state.
+
+**Why this structure minimizes refactoring:**
+1. Adding a new condition function → add to `StateResolver`, zero UI changes
+2. Adding a new node type → add to `types.ts` + `NodeIcon.tsx`, engine unchanged
+3. Swapping dagre for elkjs → only `NodeCanvas.tsx` changes
+4. Adding persistence → new `data/persistence.ts`, store gets `save()/load()` actions
+5. Adding editor → new `ui/editor/` directory, zero engine changes
 
 ```
 App
@@ -297,15 +399,18 @@ interface GameState {
 | Module | Deliverable |
 |--------|-------------|
 | Scaffold | Vite + React + TS + Zustand |
-| Schema | TS types + Zod validators for level JSON |
+| Schema | TS types + Zod validators + **cycle detection** (DFS at load time) |
 | ConditionParser | String → token → boolean, fully tested |
 | NodeTree | NodeCard + ConnectionLines + dagre layout + click expand |
-| StateMachine | Zustand store: hp/sanity/items/flags/visitedNodes |
+| StateMachine | Zustand store: hp/sanity/items/flags/visitedNodes. **checkEndings() after every effect.** |
 | StatusBar | Animated HP/Sanity bars |
+| ErrorBoundary | ErrorBoundary + LevelLoadError components |
 | Mini Level | `tutorial.json` — 8-10 nodes, 3 rules, 2 endings |
 | Integration | Click through end-to-end |
 
 **Success test:** Open browser → see start node → click → read rules → make choice → reach ending.
+
+**Death check rule:** `checkEndings()` runs after EVERY `Effect` application. If hp ≤ 0 or sanity ≤ 0 → immediate death ending. No deferred checks.
 
 ### Phase 2: Full Level (~2 days)
 
