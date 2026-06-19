@@ -32,6 +32,7 @@ export class StateResolver {
   getStat(name: string): number {
     if (name === 'sanity') return this.state.sanity;
     if (name === 'hp') return this.state.hp;
+    if (name === 'turn_count') return this.state.turnCount;
     throw new Error(`Unknown stat: ${name}`);
   }
 }
@@ -228,6 +229,7 @@ class Evaluator {
       case 'has_flag':   return this.resolver.has_flag(args[0] ?? '');
       case 'knows_rule': return this.resolver.knows_rule(args[0] ?? '');
       case 'visited':    return this.resolver.visited(args[0] ?? '');
+      case 'turn_count': return this.resolver.getStat('turn_count') >= parseInt(args[0] ?? '0');
       default:
         console.warn(`Unknown function: ${name}`);
         return false;

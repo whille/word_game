@@ -165,6 +165,7 @@ export interface SerializedGameState {
   activeViolations: ActiveViolation[];
   discoveredEndings: string[];
   currentBackground: string | null;
+  turnCount: number;
 }
 
 // ---- Game State (runtime, with Sets/Maps) ----
@@ -181,6 +182,7 @@ export interface GameState {
   snapshots: Snapshot[];
   discoveredEndings: string[];
   currentBackground: string | null;
+  turnCount: number;
 }
 
 // ---- Layout Node (used by NodeCanvas) ----

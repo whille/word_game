@@ -35,6 +35,7 @@ interface StoreState extends GameState {
   clickNode: (nodeId: string) => void;
   selectConnection: (connectionIndex: number) => void;
   useItem: (itemId: string, onNodeId: string) => void;
+  combineItems: (itemA: string, itemB: string) => void;
   saveSnapshot: (label: string) => void;
   restoreSnapshot: (snapshotId: string) => void;
   toggleNodeCollapse: (nodeId: string) => void;
@@ -55,6 +56,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
   expandedNodes: new Set(),
   snapshots: [],
   discoveredEndings: [],
+	turnCount: 0,
 	currentBackground: null,
   currentEnding: null,
 
@@ -86,7 +88,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
         visitedNodes: new Set([level.startNodeId]), knownRules: new Map(),
         activeViolations: [], currentNodeId: level.startNodeId,
         expandedNodes: new Set(), snapshots: [], discoveredEndings: [],
-        currentBackground: null,
+        turnCount: 0, currentBackground: null,
       });
       for (const c of ch) s.add(c.targetId);
       return s;
@@ -228,6 +230,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
         : state.discoveredEndings,
       currentBackground: node.onEnter?.background ?? state.currentBackground,
       currentEnding: ending ?? null,
+      turnCount: state.turnCount + 1,
     });
   },
 
@@ -308,6 +311,38 @@ export const useGameStore = create<StoreState>((set, get) => ({
     } else {
       set({ items: newItems });
     }
+  },
+
+  combineItems: (itemA: string, itemB: string) => {
+    const state = get();
+    if (!state.items.includes(itemA) || !state.items.includes(itemB)) return;
+
+    const evaluator = (state as StoreState)._evaluator;
+    if (!evaluator) return;
+
+    const allItems = evaluator.getLevel().items;
+    const defA = allItems.find(i => i.id === itemA);
+    const defB = allItems.find(i => i.id === itemB);
+
+    // Check if A can combine with B, or B with A
+    let resultId: string | null = null;
+    if (defA?.combine && defA.combine.with === itemB) resultId = defA.combine.becomes;
+    if (!resultId && defB?.combine && defB.combine.with === itemA) resultId = defB.combine.becomes;
+
+    if (!resultId) {
+      showToast('❌ 这两个道具无法合成');
+      return;
+    }
+
+    // Remove both items, add result
+    const newItems = state.items.filter(id => id !== itemA && id !== itemB);
+    newItems.push(resultId);
+
+    const resultDef = allItems.find(i => i.id === resultId);
+    const resultName = resultDef?.name ?? resultId;
+    showToast(`✨ 合成了 ${resultName}！`);
+
+    set({ items: newItems });
   },
 
   saveSnapshot: (label: string) => {

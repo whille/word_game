@@ -154,6 +154,7 @@ export function serializeState(state: GameState) {
     activeViolations: state.activeViolations,
     discoveredEndings: state.discoveredEndings,
     currentBackground: state.currentBackground,
+    turnCount: state.turnCount,
   };
 }
 
@@ -170,5 +171,6 @@ export function deserializeState(data: ReturnType<typeof serializeState>): Parti
     activeViolations: data.activeViolations,
     discoveredEndings: data.discoveredEndings,
     currentBackground: data.currentBackground ?? null,
+    turnCount: data.turnCount ?? 0,
   };
 }
