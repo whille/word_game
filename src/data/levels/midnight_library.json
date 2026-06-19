@@ -1,0 +1,437 @@
+{
+  "meta": {
+    "id": "midnight_library",
+    "title": "深夜图书馆",
+    "author": "Rule Horror",
+    "version": 1,
+    "description": "闭馆铃声早已响过。你从书本中惊醒，发现阅览室空无一人。墙上贴着一张泛黄的《阅览守则》——有些条目被人用红笔划掉，又在旁边重新写了一遍。"
+  },
+  "startNodeId": "start",
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "content": "晚上 11:47。你是被冷醒的。阅览室的暖气不知何时停了，桌上的台灯是唯一的光源。面前摊着一本你从没见过的旧书，翻开的那页只有一行手写的字：「别让他们发现你还醒着。」墙上贴着一张《阅览守则》。",
+      "children": [
+        { "targetId": "read_rules", "label": "阅读阅览守则" },
+        { "targetId": "ignore_rules", "label": "合上书直接离开" }
+      ]
+    },
+    {
+      "id": "read_rules",
+      "type": "clue",
+      "content": "《阅览守则·上》：\n① 闭馆后禁止在书架间走动。如需取书，请按桌上的服务铃\n② 如听到书页翻动的声音，请立即前往声源处查看——可能是擅入者\n③ 地下室档案室仅供教职工进入，学生未经许可不得入内",
+      "onEnter": {
+        "grantsRule": "lib_rule_1",
+        "narrative": "守则上有些条目的墨迹还很新，像是今晚才贴上去的。①和②写在同一页——这不矛盾吗？"
+      },
+      "children": [
+        { "targetId": "read_rules2", "label": "翻到下一页" }
+      ]
+    },
+    {
+      "id": "read_rules2",
+      "type": "clue",
+      "content": "《阅览守则·下》：\n④ 本馆所有安全出口均需通过地下室走廊\n⑤ 不要在阅览室睡觉——如果你醒来发现自己在这里，说明你已经睡着了\n⑥ 「禁书区」的书籍请勿擅自翻阅，违者后果自负\n⑦ 如果你看到灯光变成红色，立刻移动到另一个房间",
+      "onEnter": {
+        "grantsRule": "lib_rule_2",
+        "narrative": "④和③矛盾——禁止去地下室但出口又必须经过。⑤读起来像是某种循环。⑥旁边用红笔写了一个「还来得及」。"
+      },
+      "children": [
+        { "targetId": "reading_room", "label": "从长椅上站起来——打量四周" }
+      ]
+    },
+    {
+      "id": "ignore_rules",
+      "type": "choice",
+      "content": "你没有看守则，合上那本诡异的旧书就要离开。但在站起来的瞬间，你发现那行手写字变了：「太迟了。」阅览室的灯管闪烁了一下——变成了暗红色。",
+      "onEnter": {
+        "effects": [{ "sanity": -10, "narrative": "你感觉到有目光落在你的后颈上" }],
+        "setFlag": "red_lights_seen"
+      },
+      "children": [
+        { "targetId": "reading_room", "label": "快步离开阅览室" }
+      ]
+    },
+    {
+      "id": "reading_room",
+      "type": "choice",
+      "content": "阅览室很大，十几排桌椅延伸到黑暗中。服务台上放着一盏小台灯、一杯还冒热气的咖啡，和一张🔦借书卡。墙上挂钟的秒针在逆时针走。远处，书架间传来轻微的沙沙声——像是有人在翻书。",
+      "onEnter": {
+        "addItems": ["library_card"],
+        "narrative": "你拿起了桌上的借书卡"
+      },
+      "children": [
+        { "targetId": "bookshelf_sound", "label": "守则②——去查看书页翻动声" },
+        { "targetId": "stay_reading_room", "label": "守则①——不进入书架区，待在座位上" },
+        { "targetId": "service_desk", "label": "走近服务台——看看有什么线索" }
+      ]
+    },
+    {
+      "id": "bookshelf_sound",
+      "type": "choice",
+      "content": "你循着声音走进书架区。日光灯管在你头顶依次熄灭，只有你走过的那排还亮着。书架的尽头，一本厚重的皮面书正摊开在地上——书页自己在翻动。但当你的影子落到书页上时，翻动停了。",
+      "onEnter": {
+        "setFlag": "entered_stacks",
+        "effects": [{ "sanity": -8 }]
+      },
+      "children": [
+        { "targetId": "red_book", "label": "捡起地上那本书" },
+        { "targetId": "restricted_section", "label": "继续深入——前面是禁书区" }
+      ]
+    },
+    {
+      "id": "red_book",
+      "type": "clue",
+      "content": "书的封面是暗红色的。没有标题，没有作者。打开第一页——上面用你的笔迹写着：「这座图书馆是一个陷阱。每本被打开的书都会记住打开它的人。你现在是它的第 37 位读者。前 36 位还在书里。」你的手在发抖。",
+      "onEnter": {
+        "addItems": ["red_book"],
+        "setFlag": "read_red_book",
+        "effects": [{ "sanity": -15, "narrative": "书页内侧有很多行名字，每一行都是不同的笔迹。最后一行是空的。" }]
+      },
+      "children": [
+        { "targetId": "restricted_section", "label": "合上书——你还需要更多答案" }
+      ]
+    },
+    {
+      "id": "stay_reading_room",
+      "type": "action",
+      "content": "你遵守了守则①，没有走进书架区。但翻书声越来越响了——从四面八方传来，像是有十几个人同时在翻书。你意识到书就在你身后的书架上。你从未离开过书架区。阅览室也是书架区的一部分。",
+      "onEnter": {
+        "setFlag": "stayed_in_room",
+        "effects": [{ "sanity": -10, "narrative": "墙在移动。书架在生长。" }]
+      },
+      "children": [
+        { "targetId": "service_desk", "label": "冲向服务台" }
+      ]
+    },
+    {
+      "id": "service_desk",
+      "type": "clue",
+      "content": "服务台上除了咖啡还有一本值班日志。最后一页是今天的日期：「23:15——例行巡视完成。禁书区3号书架发现一本不该存在的书。已上报。等待指示。」日志的署名栏空着——但签名处的墨水还没干。",
+      "onEnter": {
+        "setFlag": "checked_desk",
+        "grantsRule": "lib_rule_3",
+        "narrative": "桌角刻着一行小字：『出口在地下室，钥匙在档案室3号柜』"
+      },
+      "children": [
+        { "targetId": "library_hall", "label": "离开服务台，去走廊" }
+      ]
+    },
+    {
+      "id": "restricted_section",
+      "type": "choice",
+      "content": "禁书区被一条红色绒绳隔开，绒绳上挂着牌子：「禁书——翻阅者不再属于图书馆，图书馆属于你。」绳后的书架排列整齐，但每本书的书脊上都贴着一张照片——你认出其中几张：值班日志上的签名者、借书卡上的前一位读者、还有你自己。",
+      "onEnter": {
+        "setFlag": "reached_restricted",
+        "effects": [{ "sanity": -12 }]
+      },
+      "children": [
+        { "targetId": "open_forbidden", "label": "拿下一本贴着你照片的书" },
+        { "targetId": "library_hall", "label": "不能碰——退到走廊" }
+      ]
+    },
+    {
+      "id": "open_forbidden",
+      "type": "monster",
+      "content": "书打开了。里面全是你的记忆——但你记得没发生过的事：在这里的无数个夜晚，无数次读守则、捡书、走向禁书区。你知道为什么前36位读者还在书里了——他们都是你。每一次当你以为自己即将逃离，你就成为了下一本书。",
+      "onEnter": {
+        "setFlag": "opened_forbidden_book",
+        "effects": [{ "hp": -25, "sanity": -30, "narrative": "图书馆不是困住你的地方——图书馆就是你。" }]
+      },
+      "children": [
+        { "targetId": "ending_death", "label": "读完了。轮到下一本了。" }
+      ]
+    },
+    {
+      "id": "library_hall",
+      "type": "choice",
+      "content": "走廊两侧是落地玻璃窗，外面极黑——不是夜晚的黑，是那种连星光都没有的虚无。走廊尽头，楼梯向下通向地下室。楼梯口立着牌子：「档案室 →」。但牌子的箭头被人用红笔改过了，指向了墙上的消防柜。",
+      "onEnter": {
+        "background": "hallway_dim"
+      },
+      "children": [
+        { "targetId": "basement_stairs", "label": "下楼梯去地下室——守则④说出口在那里" },
+        { "targetId": "fire_cabinet", "label": "检查消防柜——牌子被人做过手脚" }
+      ]
+    },
+    {
+      "id": "basement_stairs",
+      "type": "choice",
+      "content": "地下室比楼上冷得多。走廊尽头是档案室的门——门上贴着一张告示：「教职工专用。学生进入将触发禁制。」门把手上挂着一把生锈的锁，锁孔的形状和你的借书卡一模一样。",
+      "children": [
+        { "targetId": "archive_room", "label": "用借书卡划锁——也许它能开" },
+        { "targetId": "fire_cabinet", "label": "不能进档案室——守则③禁止——回去检查消防柜" }
+      ]
+    },
+    {
+      "id": "fire_cabinet",
+      "type": "clue",
+      "content": "消防柜里没有灭火器。里面是一扇暗门——没锁，一推就开了。门后是一道狭窄的铁楼梯，通向楼顶的钟楼。月光从钟楼的天窗洒下来——这是真的月光。但钟楼的钟没有指针——它没有在计时间，因为这里的时间不属于外面。",
+      "onEnter": {
+        "setFlag": "found_belltower",
+        "effects": [{ "sanity": -3 }]
+      },
+      "children": [
+        { "targetId": "ending_true", "label": "爬上钟楼——天窗外是黎明的天空" }
+      ]
+    },
+    {
+      "id": "archive_room",
+      "type": "clue",
+      "content": "借书卡插进锁孔，锁开了。档案室里排满了铁柜，每个柜子标签上都是一个年份——从 1923 年一直到今年。你拉开了标着今年的柜子，里面只有一卷档案——封面上是你的名字。档案内容只有一行字：『第37次尝试。借书卡可用。消防柜暗门未封。建议：不要读禁书。成功了。』",
+      "onEnter": {
+        "setFlag": "found_archive",
+        "grantsRule": "lib_rule_3",
+        "effects": [{ "sanity": -8, "narrative": "这是你自己写的——上一次的你，留给这一次的你。" }]
+      },
+      "children": [
+        { "targetId": "staff_exit", "label": "档案提到出口——找教职工通道" }
+      ]
+    },
+    {
+      "id": "staff_exit",
+      "type": "action",
+      "content": "档案室深处，一道标着「教职工专用出口」的门微微敞开。门外的空气带着图书馆外面的味道——不是尘土和旧书，而是湿漉漉的草地和黎明。你的借书卡轻轻震动，像是在说：这次可以了。",
+      "onEnter": {
+        "setFlag": "found_staff_exit",
+        "effects": [{ "hp": 10, "narrative": "你感到某种循环即将被打破" }]
+      },
+      "children": [
+        { "targetId": "ending_true", "label": "推开门，走出去" }
+      ]
+    },
+    {
+      "id": "ending_true",
+      "type": "ending",
+      "content": "门外是图书馆正门前的石板路。天亮了——清凉的晨光洒在草坪上，远处的教学楼已经有了零星的灯光。你回头看向图书馆，门上的开放时间是 8:00-22:30。现在刚过 6:00。你没有离开——你只是终于回到了正确的时间里。你放了那本红皮书在门口的还书箱里。也许下一个人也会看到自己的字迹。但第37个名字不会是你了。",
+      "children": []
+    },
+    {
+      "id": "ending_bad",
+      "type": "ending",
+      "content": "你回到了阅览室，坐在原来的位置上，翻开那本旧书——第一页多了一行：「第38次尝试开始。」你看着这行字，努力回想刚才发生的一切——但记忆像沙子一样从指缝间流走了。你看到墙上的《阅览守则》，上面又多了几条——是你在上一轮写的。你会一直写下去，直到你写出正确的答案，或者直到书页用完。",
+      "children": []
+    },
+    {
+      "id": "ending_neutral",
+      "type": "ending",
+      "content": "你没有去地下室。没有碰禁书。没有看红皮书的最后几页。你坐在阅览室一直等到早晨的第一缕阳光从玻璃窗照进来。图书馆看起来一切正常，就好像什么都没有发生过。但你知道夜里发生了什么——你只是选择了不去参与。走出图书馆的那一刻你感到一阵轻松，但也有一丝遗憾：那些没翻开的书里，是不是有关于你的答案？",
+      "children": []
+    },
+    {
+      "id": "ending_death",
+      "type": "ending",
+      "content": "书页合上了。你感到自己正在被压成薄薄的一页——你的全部记忆、性格、经历，变成了一段叙述，等待着下一个读者来翻阅。你最后意识到的是：这本红皮书的书架上，现在已经有了37本一模一样的书。每一本都是一个你。图书馆的藏品又丰富了。",
+      "children": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "lib_rule_1",
+      "order": 1,
+      "text": "闭馆后禁止在书架间走动。如需取书，请按桌上的服务铃。",
+      "annotation": "服务铃的电池已经被腐蚀了。",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "bookshelf_sound" },
+        { "on": "node_enter", "nodeId": "restricted_section" }
+      ],
+      "violation": {
+        "condition": "has_flag('entered_stacks')",
+        "immediate": {
+          "sanity": -8,
+          "narrative": "违反守则①：你在闭馆后进入了书架区。书架间有什么东西在注视你。"
+        },
+        "persistent": {
+          "tick": "node_enter",
+          "effect": { "sanity": -2 },
+          "until": "visited('library_hall')"
+        },
+        "narrative": "每排书架的尽头都站着一个黑影"
+      },
+      "contradicts": ["lib_rule_2"]
+    },
+    {
+      "id": "lib_rule_2",
+      "order": 2,
+      "text": "如听到书页翻动的声音，请立即前往声源处查看——可能是擅入者。",
+      "annotation": "但守则①说禁止在书架间走动——谁写的规则？",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "stay_reading_room" }
+      ],
+      "violation": {
+        "condition": "has_flag('stayed_in_room')",
+        "immediate": {
+          "hp": -8,
+          "sanity": -10,
+          "narrative": "违反守则②：你没有去查看翻书声。擅入者现在就在你身后。"
+        },
+        "persistent": {
+          "tick": "node_enter",
+          "effect": { "sanity": -3 },
+          "until": "visited('service_desk')"
+        },
+        "narrative": "翻书声一直跟着你"
+      },
+      "contradicts": ["lib_rule_1"]
+    },
+    {
+      "id": "lib_rule_3",
+      "order": 3,
+      "text": "地下室档案室仅供教职工进入。学生未经许可不得入内。",
+      "annotation": "但值班日志上写着所有出口都经过地下室。",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "archive_room" }
+      ],
+      "violation": {
+        "condition": "has_flag('found_archive')",
+        "immediate": {
+          "sanity": -5,
+          "narrative": "违反守则③：你进入了档案室。但档案室似乎期望你的到来。"
+        },
+        "narrative": "档案柜里的文件都在低声絮语"
+      },
+      "contradicts": ["lib_rule_4"]
+    },
+    {
+      "id": "lib_rule_4",
+      "order": 4,
+      "text": "本馆所有安全出口均需通过地下室走廊。",
+      "annotation": "这条规则印在消防疏散图上，但疏散图的日期是今天。",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "basement_stairs" }
+      ],
+      "violation": {
+        "condition": "has_flag('found_belltower') && !has_flag('found_archive')",
+        "immediate": {
+          "sanity": -10,
+          "narrative": "违反守则④：你找到了不经档案室的出口。图书馆的规则正在改写自己。"
+        },
+        "narrative": "墙壁上的守则文字在流动"
+      },
+      "contradicts": ["lib_rule_3"]
+    },
+    {
+      "id": "lib_rule_5",
+      "order": 5,
+      "text": "不要在阅览室睡觉。如果你醒来发现自己在这里，说明你已经睡着了。",
+      "annotation": "这条读起来像是被困在循环里的人写的。",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "reading_room" }
+      ],
+      "violation": {
+        "condition": "has_flag('stayed_in_room')",
+        "immediate": {
+          "sanity": -12,
+          "narrative": "违反守则⑤：你在阅览室睡着了。现在是第几次醒来了？"
+        },
+        "persistent": {
+          "tick": "node_enter",
+          "effect": { "sanity": -2 },
+          "until": "has_flag('found_belltower')"
+        },
+        "narrative": "你分不清醒和睡的界限了"
+      }
+    },
+    {
+      "id": "lib_rule_6",
+      "order": 6,
+      "text": "「禁书区」的书籍请勿擅自翻阅。违者后果自负。",
+      "annotation": "'后果'两个字被反复描粗了很多遍。",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "open_forbidden" }
+      ],
+      "violation": {
+        "condition": "has_flag('opened_forbidden_book')",
+        "immediate": {
+          "hp": -25,
+          "sanity": -25,
+          "narrative": "违反守则⑥：你打开了禁书。图书馆已经记录了你。"
+        },
+        "persistent": {
+          "tick": "node_enter",
+          "effect": { "sanity": -5 },
+          "until": "has_flag('found_archive')"
+        },
+        "narrative": "书中的人物在看着书外的你"
+      }
+    },
+    {
+      "id": "lib_rule_7",
+      "order": 7,
+      "text": "如果你看到灯光变成红色，立刻移动到另一个房间。",
+      "annotation": "红光的源头是什么？守则没有解释。",
+      "triggers": [
+        { "on": "node_enter", "nodeId": "reading_room" }
+      ],
+      "violation": {
+        "condition": "has_flag('red_lights_seen') && !visited('library_hall')",
+        "immediate": {
+          "sanity": -10,
+          "narrative": "违反守则⑦：红灯亮起时你没有离开房间。它看到了你。"
+        },
+        "narrative": "世界蒙上了一层红色的滤镜"
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "library_card",
+      "name": "借书卡",
+      "usableOn": ["archive_room", "basement_stairs", "staff_exit"]
+    },
+    {
+      "id": "red_book",
+      "name": "红皮书",
+      "usableOn": ["archive_room", "restricted_section"]
+    },
+    {
+      "id": "flashlight",
+      "name": "手电筒",
+      "usableOn": ["bookshelf_sound", "library_hall", "basement_stairs"]
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending_true",
+      "name": "真结局：第37次·成功",
+      "type": "true",
+      "conditions": [
+        "has_item('library_card')",
+        "has_flag('found_archive')",
+        "visited('staff_exit')"
+      ],
+      "narrative": "借书卡、档案室、自己留下的线索——三样东西合在一起，你打破了36次循环，在第37次成功离开了图书馆。红皮书被留在了还书箱里。"
+    },
+    {
+      "id": "ending_bad",
+      "name": "坏结局：第38次循环",
+      "type": "bad",
+      "conditions": [
+        "has_flag('read_red_book')",
+        "!has_flag('found_belltower')",
+        "!has_flag('found_archive')"
+      ],
+      "narrative": "你知道了真相却没有找到出口。下一轮循环开始——但你会忘记这一次。就像前36次一样。"
+    },
+    {
+      "id": "ending_neutral",
+      "name": "中性结局：闭馆",
+      "type": "neutral",
+      "conditions": [
+        "!has_flag('entered_stacks')",
+        "!has_flag('found_archive')"
+      ],
+      "narrative": "你没有参与这个夜晚的规则游戏。天亮时你走了出去——安全，但什么都没学到。图书馆明天还会开门。你还会回来吗？"
+    },
+    {
+      "id": "ending_death",
+      "name": "死亡结局：第37本书",
+      "type": "death",
+      "conditions": [
+        "has_flag('opened_forbidden_book')"
+      ],
+      "narrative": "禁书合上了。它又多了一个故事可以讲。你的故事。"
+    }
+  ]
+}

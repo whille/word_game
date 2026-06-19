@@ -12,10 +12,12 @@ import type { Level } from './engine/types';
 // Available levels
 import apartmentNight from './data/levels/apartment_night.json';
 import midnightHospital from './data/levels/midnight_hospital.json';
+import midnightLibrary from './data/levels/midnight_library.json';
 
 const LEVELS = [
   { key: 'apartment_night', label: '🏢 公寓深夜', data: apartmentNight, desc: '老公寓的住户守则互相矛盾。楼道里传来奇怪的声响。' },
   { key: 'midnight_hospital', label: '🏥 午夜医院', data: midnightHospital, desc: '废弃医院里醒来的病人。护士站有东西在等你。' },
+  { key: 'midnight_library', label: '📚 深夜图书馆', data: midnightLibrary, desc: '闭馆后独自醒来。禁书在架子上轻轻呼吸。守则在改写自己。' },
 ] as const;
 
 type LevelKey = (typeof LEVELS)[number]['key'];
