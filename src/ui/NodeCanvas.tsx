@@ -22,6 +22,7 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
   const expandedNodes = useGameStore(s => s.expandedNodes);
   const currentNodeId = useGameStore(s => s.currentNodeId);
   const clickNode = useGameStore(s => s.clickNode);
+  const toggleNodeCollapse = useGameStore(s => s.toggleNodeCollapse);
 
   // Compute layout
   const { layoutNodes, edges } = useMemo(() => {
@@ -135,6 +136,9 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
           const node = evaluator.getLevel().nodes.find(n => n.id === ln.nodeId);
           if (!node) return null;
           const isTarget = validTargets.has(ln.nodeId);
+          const isCurrent = ln.nodeId === currentNodeId;
+          // Check if this node has expanded children in the tree
+          const hasExpandedChildren = node.children.some(c => expandedNodes.has(c.targetId));
           return (
             <NodeCard
               key={ln.nodeId}
@@ -143,13 +147,16 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
               type={node.type}
               x={ln.x}
               y={ln.y}
-              isCurrent={ln.nodeId === currentNodeId}
+              isCurrent={isCurrent}
               isExpanded={expandedNodes.has(ln.nodeId)}
               isValidTarget={isTarget}
+              hasExpandedChildren={hasExpandedChildren}
               onClick={() => {
                 if (selectedItemId && isTarget) {
                   onItemUse(selectedItemId, ln.nodeId);
                   onItemDeselect();
+                } else if (isCurrent && node.children.length > 0) {
+                  toggleNodeCollapse(ln.nodeId);
                 } else {
                   clickNode(ln.nodeId);
                 }

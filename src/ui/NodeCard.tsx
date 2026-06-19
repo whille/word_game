@@ -12,10 +12,11 @@ interface NodeCardProps {
   isCurrent: boolean;
   isExpanded: boolean;
   isValidTarget: boolean;
+  hasExpandedChildren: boolean;
   onClick: () => void;
 }
 
-export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _isExpanded, isValidTarget, onClick }: NodeCardProps) {
+export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _isExpanded, isValidTarget, hasExpandedChildren, onClick }: NodeCardProps) {
   const isVisited = useGameStore(s => s.visitedNodes.has(nodeId));
 
   const style = useMemo(() => {
@@ -58,6 +59,28 @@ export function NodeCard({ nodeId, content, type, x, y, isCurrent, isExpanded: _
     <div style={style} onClick={onClick}>
       <NodeIcon type={type} />
       <NodeContent content={content} isCurrent={isCurrent} />
+      {/* Toggle indicator — only on current node with children */}
+      {isCurrent && (
+        <span style={{
+          position: 'absolute',
+          top: '-8px',
+          right: '-8px',
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          background: hasExpandedChildren ? '#333' : '#1a2a1a',
+          border: hasExpandedChildren ? '1px solid #888' : '1px solid #44aa66',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '14px',
+          color: hasExpandedChildren ? '#aaa' : '#44cc88',
+          cursor: 'pointer',
+          lineHeight: 1,
+        }}>
+          {hasExpandedChildren ? '−' : '+'}
+        </span>
+      )}
     </div>
   );
 }

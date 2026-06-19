@@ -6,6 +6,23 @@ import { create } from 'zustand';
 import type { GameState, Level, PlayerAction } from '../engine/types';
 import { RuleEvaluator, applyEffect, serializeState, deserializeState } from '../engine/RuleEvaluator';
 
+// ---- Helper: collect all descendants of a node in expandedNodes ----
+function collectDescendants(
+  nodeId: string,
+  evaluator: RuleEvaluator,
+  expanded: Set<string>,
+  out: Set<string>,
+): void {
+  const node = evaluator.getNode(nodeId);
+  if (!node) return;
+  for (const child of node.children) {
+    if (expanded.has(child.targetId)) {
+      out.add(child.targetId);
+      collectDescendants(child.targetId, evaluator, expanded, out);
+    }
+  }
+}
+
 // Internal store type extends GameState with actions and hidden fields
 interface StoreState extends GameState {
   _evaluator: RuleEvaluator | null;
@@ -17,6 +34,7 @@ interface StoreState extends GameState {
   useItem: (itemId: string, onNodeId: string) => void;
   saveSnapshot: (label: string) => void;
   restoreSnapshot: (snapshotId: string) => void;
+  toggleNodeCollapse: (nodeId: string) => void;
   resetGame: () => void;
   getEvaluator: () => RuleEvaluator | null;
 }
@@ -258,6 +276,35 @@ export const useGameStore = create<StoreState>((set, get) => ({
     set({
       ...restored,
     } as Partial<GameState>);
+  },
+
+  toggleNodeCollapse: (nodeId: string) => {
+    const state = get();
+    const evaluator = state._evaluator;
+    if (!evaluator) return;
+
+    const node = evaluator.getNode(nodeId);
+    if (!node || node.children.length === 0) return;
+
+    const directChildIds = node.children.map(c => c.targetId);
+    const anyExpanded = directChildIds.some(id => state.expandedNodes.has(id));
+
+    if (anyExpanded) {
+      // Collapse: remove all descendants from expandedNodes
+      const toRemove = new Set<string>();
+      collectDescendants(nodeId, evaluator, state.expandedNodes, toRemove);
+      const newExpanded = new Set(state.expandedNodes);
+      for (const id of toRemove) newExpanded.delete(id);
+      set({ expandedNodes: newExpanded });
+    } else {
+      // Expand: add visible children
+      const visible = evaluator.getVisibleChildren(nodeId, state);
+      const newExpanded = new Set(state.expandedNodes);
+      for (const child of visible) {
+        newExpanded.add(child.targetId);
+      }
+      set({ expandedNodes: newExpanded });
+    }
   },
 
   resetGame: () => {
