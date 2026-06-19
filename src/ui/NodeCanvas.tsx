@@ -106,7 +106,7 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
 
     const level = evaluator.getLevel();
     const g = new dagre.graphlib.Graph();
-    g.setGraph({ rankdir: 'TB', nodesep: 70, ranksep: 140, marginx: 50, marginy: 50 });
+    g.setGraph({ rankdir: 'TB', nodesep: 100, ranksep: 260, marginx: 80, marginy: 80 });
     g.setDefaultEdgeLabel(() => ({}));
 
     for (const node of level.nodes) {
