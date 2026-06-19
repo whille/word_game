@@ -148,3 +148,40 @@ html, body {
 .box-horror-pulse {
   animation: box-horror-pulse 3s infinite;
 }
+
+/* ============================================================
+   Mobile Responsive — Phase 5 T15
+   ============================================================ */
+
+@media (max-width: 768px) {
+  html, body {
+    font-size: 14px;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Increase touch target sizes */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Scrollbar thinner on mobile */
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+}
+
+@media (max-width: 480px) {
+  html, body {
+    font-size: 13px;
+  }
+}
+
+/* Safe area insets for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}

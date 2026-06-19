@@ -30,6 +30,10 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, scrollX: 0, scrollY: 0 });
 
+  // Touch pinch zoom
+  const [zoom, setZoom] = useState(1);
+  const pinchRef = useRef({ initialDist: 0, initialZoom: 1 });
+
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     // Only start drag on left button, not on node cards (those are clicks)
     if (e.button !== 0) return;
@@ -55,6 +59,45 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+  }, []);
+
+  // ---- Touch handlers (Phase 5 T16) ----
+  const touchState = useRef<{ type: 'none' | 'pan' | 'pinch'; touches: number }>({ type: 'none', touches: 0 });
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    if (e.touches.length === 1) {
+      touchState.current = { type: 'pan', touches: 1 };
+      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, scrollX: el.scrollLeft, scrollY: el.scrollTop };
+    } else if (e.touches.length === 2) {
+      touchState.current = { type: 'pinch', touches: 2 };
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      pinchRef.current = { initialDist: Math.sqrt(dx * dx + dy * dy), initialZoom: zoom };
+    }
+  }, [zoom]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchState.current.type === 'pan') {
+      const el = scrollRef.current;
+      if (!el) return;
+      const dx = e.touches[0].clientX - dragStart.current.x;
+      const dy = e.touches[0].clientY - dragStart.current.y;
+      el.scrollLeft = dragStart.current.scrollX - dx;
+      el.scrollTop = dragStart.current.scrollY - dy;
+    } else if (touchState.current.type === 'pinch' && e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const scale = pinchRef.current.initialZoom * (dist / pinchRef.current.initialDist);
+      setZoom(Math.max(0.4, Math.min(2.5, scale)));
+    }
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    touchState.current = { type: 'none', touches: 0 };
   }, []);
 
   // ---- Compute layout ----
@@ -148,6 +191,9 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       style={{
         flex: 1,
         overflow: 'auto',
@@ -168,6 +214,9 @@ export function NodeCanvas({ selectedItemId, onItemUse, onItemDeselect }: NodeCa
         width: bounds.width,
         height: bounds.height,
         minWidth: '100%',
+        transform: `scale(${zoom})`,
+        transformOrigin: 'top left',
+        transition: zoom === 1 ? 'transform 0.15s ease-out' : 'none',
         pointerEvents: isDragging ? 'none' : 'auto',
       }}>
         <ConnectionLines edges={edgesWithLabels.map(e => ({
